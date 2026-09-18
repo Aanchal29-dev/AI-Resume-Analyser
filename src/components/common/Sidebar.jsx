@@ -1,0 +1,158 @@
+// src/components/common/Sidebar.jsx
+import React, { useState } from 'react';
+import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  FileCheck2,
+  Target,
+  Compass,
+  Bot,
+  Settings,
+  Menu,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  LogOut,
+  Sparkles
+} from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+
+const Sidebar = ({ children }) => {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const { userProfile, logout } = useApp();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const navItems = [
+    { name: 'Home Workspace', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Resume Analyzer', path: '/upload-resume', icon: FileCheck2 },
+    { name: 'Job Matcher', path: '/job-matcher', icon: Target },
+    { name: 'Career Path', path: '/career-discovery', icon: Compass },
+    { name: 'AI Assistant', path: '/ai-assistant', icon: Bot, badge: 'AI' },
+    { name: 'Settings & Profile', path: '/settings', icon: Settings }
+  ];
+
+  const handleSignOut = () => {
+    logout();
+    navigate('/login');
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row font-sans">
+      {/* Mobile Header Bar */}
+      <div className="md:hidden bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-violet-600 flex items-center justify-center text-white border border-purple-400/40">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-extrabold text-base text-stone-900">SkillSync</span>
+        </Link>
+        <button
+          onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
+          className="p-2 rounded-lg text-stone-600 hover:bg-purple-50"
+        >
+          {mobileDrawerOpen ? <X className="w-6 h-6 text-purple-700" /> : <Menu className="w-6 h-6 text-purple-700" />}
+        </button>
+      </div>
+
+      {/* Desktop Sidebar / Mobile Drawer */}
+      <aside
+        className={`fixed md:sticky top-0 z-40 h-screen bg-white border-r border-stone-200/80 flex flex-col justify-between transition-all duration-300 ${
+          collapsed ? 'w-20' : 'w-64'
+        } ${
+          mobileDrawerOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
+        }`}
+      >
+        {/* Top Brand Header - SkillSync AI */}
+        <div>
+          <div className="h-16 px-5 flex items-center justify-between border-b border-stone-100">
+            <Link to="/" className="flex items-center gap-3 overflow-hidden group">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-violet-600 to-fuchsia-500 flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform border border-purple-400/30">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              {!collapsed && (
+                <div>
+                  <span className="font-extrabold text-sm text-stone-900 tracking-tight block">SkillSync</span>
+                  <span className="text-[10px] text-purple-700 font-semibold block">Back to Landing Page</span>
+                </div>
+              )}
+            </Link>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="hidden md:flex p-1.5 rounded-lg text-stone-400 hover:text-purple-700 hover:bg-purple-50"
+            >
+              {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {/* Clean Navigation Items */}
+          <nav className="p-3 space-y-1.5 mt-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold transition-all ${
+                    isActive
+                      ? 'bg-purple-50/90 text-purple-700 border border-purple-200/80 shadow-xs font-bold'
+                      : 'text-stone-600 hover:text-purple-700 hover:bg-purple-50/60'
+                  }`}
+                  title={collapsed ? item.name : undefined}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-purple-700' : 'text-stone-400'}`} />
+                    {!collapsed && <span className="text-xs tracking-wide">{item.name}</span>}
+                  </div>
+                  {!collapsed && item.badge && (
+                    <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md bg-purple-600 text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </NavLink>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Bottom User Profile & Sign Out Widget */}
+        <div className="p-3 border-t border-slate-100 space-y-1">
+          <Link
+            to="/profile"
+            className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-100 transition-colors"
+          >
+            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0 border border-indigo-200">
+              {userProfile.fullName ? userProfile.fullName.slice(0, 2).toUpperCase() : 'US'}
+            </div>
+            {!collapsed && (
+              <div className="overflow-hidden text-left flex-1">
+                <div className="text-xs font-bold text-slate-800 truncate">{userProfile.fullName || 'User'}</div>
+                <div className="text-[10px] text-slate-400 truncate">{userProfile.email || 'user@example.com'}</div>
+              </div>
+            )}
+          </Link>
+
+          {!collapsed && (
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Sign Out
+            </button>
+          )}
+        </div>
+      </aside>
+
+      {/* Main Workspace Content */}
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0 overflow-y-auto">
+        {children}
+      </main>
+    </div>
+  );
+};
+
+export default Sidebar;
