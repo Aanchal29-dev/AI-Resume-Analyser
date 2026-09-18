@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
-import { Sparkles, CheckCircle2, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import { Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 const SERVICE_DETAILS_DATA = {
@@ -99,7 +99,7 @@ const ServiceDetailModal = ({ service, isOpen, onClose }) => {
   const handleAction = () => {
     onClose();
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { state: { from: '/upload-resume' } });
     } else {
       navigate('/upload-resume');
     }
@@ -107,34 +107,34 @@ const ServiceDetailModal = ({ service, isOpen, onClose }) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={service.title} maxWidth="max-w-2xl">
-      <div className="space-y-6 text-slate-800 font-sans">
+      <div className="space-y-6 text-stone-800 font-sans">
         {/* Header Badge */}
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/60">
+          <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-purple-100 text-purple-800 border border-purple-300/80">
             {service.badge} Service
           </span>
-          <span className="text-xs text-slate-500 font-medium">Interactive Feature Overview</span>
+          <span className="text-xs text-stone-500 font-medium">Interactive Feature Overview</span>
         </div>
 
         {/* Overview */}
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Service Description</h4>
-          <p className="text-xs sm:text-sm text-slate-700 leading-relaxed font-medium bg-slate-50 p-4 rounded-xl border border-slate-200/70">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-purple-700 mb-1">Service Description</h4>
+          <p className="text-xs sm:text-sm text-stone-700 leading-relaxed font-medium bg-purple-50/60 p-4 rounded-xl border border-purple-200/80">
             {service.description}
           </p>
         </div>
 
         {/* How It Works Step-by-Step */}
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">How It Works (Step-by-Step Process)</h4>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-purple-700 mb-3">How It Works (Step-by-Step Process)</h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {details.howItWorks.map((st) => (
-              <div key={st.step} className="p-3.5 rounded-xl border border-slate-200 bg-white shadow-xs space-y-1">
-                <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white font-extrabold text-xs flex items-center justify-center">
+              <div key={st.step} className="p-3.5 rounded-xl border border-purple-200/80 bg-white shadow-xs space-y-1">
+                <div className="w-6 h-6 rounded-lg bg-purple-600 text-white font-extrabold text-xs flex items-center justify-center shadow-xs">
                   {st.step}
                 </div>
-                <div className="font-bold text-slate-900 text-xs mt-1">{st.title}</div>
-                <p className="text-[11px] text-slate-500 leading-normal">{st.desc}</p>
+                <div className="font-bold text-stone-900 text-xs mt-1">{st.title}</div>
+                <p className="text-[11px] text-stone-500 leading-normal">{st.desc}</p>
               </div>
             ))}
           </div>
@@ -142,10 +142,10 @@ const ServiceDetailModal = ({ service, isOpen, onClose }) => {
 
         {/* Key Deliverables */}
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Key Deliverables & Benefits</h4>
+          <h4 className="text-xs font-bold uppercase tracking-wider text-purple-700 mb-2">Key Deliverables & Benefits</h4>
           <div className="space-y-1.5">
             {details.deliverables.map((del, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-xs font-semibold text-slate-800">
+              <div key={idx} className="flex items-center gap-2 text-xs font-semibold text-stone-800">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>{del}</span>
               </div>
@@ -154,10 +154,10 @@ const ServiceDetailModal = ({ service, isOpen, onClose }) => {
         </div>
 
         {/* CTA Button */}
-        <div className="pt-4 border-t border-slate-100 flex justify-end">
+        <div className="pt-4 border-t border-purple-200/60 flex justify-end">
           <button
             onClick={handleAction}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.01]"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all hover:scale-[1.01]"
           >
             {isAuthenticated ? 'Use Service Now' : 'Sign In to Access Service'} <ArrowRight className="w-4 h-4" />
           </button>

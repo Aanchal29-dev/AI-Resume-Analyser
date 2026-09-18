@@ -1,6 +1,5 @@
-// src/App.jsx
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import ScrollToTop from './components/common/ScrollToTop';
 import PageTransition from './components/common/PageTransition';
@@ -33,8 +32,9 @@ import SettingsPage from './pages/SettingsPage';
 // Protected Route Guard Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useApp();
+  const location = useLocation();
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
   return children;
 };
@@ -45,13 +45,13 @@ function AppRoutes() {
       <ScrollToTop />
       <PageTransition />
       <Routes>
-        {/* Public Landing & Services Catalog */}
+        {/* Public Landing & Auth */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/resume-services" element={<ResumeServicesPage />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/signup" element={<AuthPage />} />
 
-        {/* Protected Dashboard Workspace & Features */}
+        {/* Protected Services & Dashboard Workspace */}
+        <Route path="/resume-services" element={<ProtectedRoute><ResumeServicesPage /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/upload-resume" element={<ProtectedRoute><UploadResumePage /></ProtectedRoute>} />
         <Route path="/resume-overview" element={<ProtectedRoute><ResumeOverviewPage /></ProtectedRoute>} />

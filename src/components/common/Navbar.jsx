@@ -1,12 +1,14 @@
 // src/components/common/Navbar.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Sparkles, Menu, X, ArrowRight } from 'lucide-react';
+import { Sparkles, Menu, X, ArrowRight, LayoutDashboard, LogOut, UserCheck } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated, logout, userProfile } = useApp();
 
   const handleNavClick = (anchorId) => {
     setMobileMenuOpen(false);
@@ -20,6 +22,21 @@ const Navbar = () => {
       const el = document.getElementById(anchorId);
       if (el) el.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleProtectedNavigation = (path) => {
+    setMobileMenuOpen(false);
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: path } });
+    } else {
+      navigate(path);
+    }
+  };
+
+  const handleLogout = () => {
+    setMobileMenuOpen(false);
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -38,7 +55,7 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Desktop Navigation Links - Styled in Purple */}
+        {/* Desktop Navigation Links */}
         <div className="hidden md:flex items-center gap-7 text-xs font-bold text-purple-700">
           <button onClick={() => handleNavClick('features')} className="hover:text-purple-900 hover:bg-purple-50 px-2.5 py-1 rounded-lg transition-all">
             Features
@@ -46,28 +63,61 @@ const Navbar = () => {
           <button onClick={() => handleNavClick('how-it-works')} className="hover:text-purple-900 hover:bg-purple-50 px-2.5 py-1 rounded-lg transition-all">
             How It Works
           </button>
-          <Link to="/resume-services" className="hover:text-purple-900 hover:bg-purple-50 px-2.5 py-1 rounded-lg transition-all">
+          <button
+            onClick={() => handleProtectedNavigation('/resume-services')}
+            className="hover:text-purple-900 hover:bg-purple-50 px-2.5 py-1 rounded-lg transition-all text-left"
+          >
             Services
-          </Link>
+          </button>
           <button onClick={() => handleNavClick('faq')} className="hover:text-purple-900 hover:bg-purple-50 px-2.5 py-1 rounded-lg transition-all">
             FAQ
           </button>
         </div>
 
-        {/* Action CTAs */}
+        {/* Action CTAs based on Auth status */}
         <div className="hidden md:flex items-center gap-3">
-          <button
-            onClick={() => navigate('/login')}
-            className="px-4 py-2 text-xs font-bold text-purple-800 hover:text-purple-950 hover:bg-purple-100/70 rounded-xl transition-colors"
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => navigate('/upload-resume')}
-            className="flex items-center gap-1.5 px-4.5 py-2.5 text-xs font-extrabold text-white bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700 hover:from-purple-700 hover:to-violet-800 rounded-xl shadow-md shadow-purple-600/30 transition-all hover:scale-[1.02]"
-          >
-            Analyze Resume <ArrowRight className="w-4 h-4" />
-          </button>
+          {isAuthenticated ? (
+            <>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-100/70 border border-purple-200 text-purple-800 text-xs font-bold">
+                <UserCheck className="w-4 h-4 text-purple-600" />
+                <span>{userProfile?.fullName || 'User'}</span>
+              </div>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-purple-900 bg-purple-100 hover:bg-purple-200 rounded-xl transition-all"
+              >
+                <LayoutDashboard className="w-4 h-4" /> Workspace
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-4 h-4" /> Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate('/login')}
+                className="px-4 py-2 text-xs font-bold text-purple-800 hover:text-purple-950 hover:bg-purple-100/70 rounded-xl transition-colors"
+              >
+                Sign In
+              </button>
+              <button
+                onClick={() => navigate('/signup')}
+                className="px-3.5 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition-colors"
+              >
+                Sign Up
+              </button>
+              <button
+                onClick={() => handleProtectedNavigation('/upload-resume')}
+                className="flex items-center gap-1.5 px-4.5 py-2.5 text-xs font-extrabold text-white bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700 hover:from-purple-700 hover:to-violet-800 rounded-xl shadow-md shadow-purple-600/30 transition-all hover:scale-[1.02]"
+              >
+                Analyze Resume <ArrowRight className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
 
         {/* Mobile menu trigger */}
@@ -88,25 +138,50 @@ const Navbar = () => {
           <button onClick={() => handleNavClick('how-it-works')} className="block w-full text-left py-2 text-purple-700 font-bold hover:text-purple-900">
             How It Works
           </button>
-          <Link to="/resume-services" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-purple-700 font-bold hover:text-purple-900">
+          <button onClick={() => handleProtectedNavigation('/resume-services')} className="block w-full text-left py-2 text-purple-700 font-bold hover:text-purple-900">
             Services
-          </Link>
+          </button>
           <button onClick={() => handleNavClick('faq')} className="block w-full text-left py-2 text-purple-700 font-bold hover:text-purple-900">
             FAQ
           </button>
           <div className="pt-3 border-t border-purple-200/80 flex flex-col gap-2">
-            <button
-              onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
-              className="w-full text-center py-2.5 text-xs font-bold text-purple-800 border border-purple-200 bg-white rounded-xl"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => { setMobileMenuOpen(false); navigate('/upload-resume'); }}
-              className="w-full text-center py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-md"
-            >
-              Analyze Resume
-            </button>
+            {isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => { setMobileMenuOpen(false); navigate('/dashboard'); }}
+                  className="w-full text-center py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-md flex items-center justify-center gap-2"
+                >
+                  <LayoutDashboard className="w-4 h-4" /> Go to Workspace
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-center py-2.5 text-xs font-bold text-rose-600 border border-rose-200 bg-rose-50 rounded-xl"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => { setMobileMenuOpen(false); navigate('/login'); }}
+                  className="w-full text-center py-2.5 text-xs font-bold text-purple-800 border border-purple-200 bg-white rounded-xl"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => { setMobileMenuOpen(false); navigate('/signup'); }}
+                  className="w-full text-center py-2.5 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-xl"
+                >
+                  Create Account
+                </button>
+                <button
+                  onClick={() => handleProtectedNavigation('/upload-resume')}
+                  className="w-full text-center py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-md"
+                >
+                  Analyze Resume
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

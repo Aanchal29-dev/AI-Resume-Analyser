@@ -21,7 +21,26 @@ import { PLATFORM_SERVICES } from '../data/mockData';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useApp();
+  const {
+    isAuthenticated,
+    hasAnalyzedResume,
+    resumeData,
+    uploadedFileName,
+    targetRole,
+    analysis
+  } = useApp();
+
+  const atsScore = analysis?.atsCompatibility || 84;
+  const jobMatchScore = analysis?.jobMatchScore || 72;
+  const pendingIssues = analysis?.issues ? analysis.issues.filter(i => i.status !== 'resolved') : [];
+  const pendingCount = pendingIssues.length;
+
+  const technicalSkills = Array.isArray(resumeData?.skills?.technical)
+    ? resumeData.skills.technical
+    : (typeof resumeData?.skills?.technical === 'string'
+      ? resumeData.skills.technical.split(',').map(s => s.trim()).filter(Boolean)
+      : ['React', 'JavaScript', 'TypeScript', 'HTML5/CSS3', 'Tailwind CSS', 'Node.js']);
+
   const [openFaq, setOpenFaq] = useState(0);
   const [selectedService, setSelectedService] = useState(null);
   const [selectedStepNumber, setSelectedStepNumber] = useState(null);
@@ -47,7 +66,7 @@ const LandingPage = () => {
 
   const handleProtectedAction = (path) => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate('/login', { state: { from: path } });
     } else {
       navigate(path);
     }
@@ -61,28 +80,23 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8f4fc] text-stone-800 flex flex-col font-sans selection:bg-purple-600 selection:text-white relative">
+    <div className="min-h-screen bg-[#f3e8fa] text-stone-800 flex flex-col font-sans selection:bg-purple-600 selection:text-white relative">
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden pt-10 pb-16 md:pt-16 md:pb-24 border-b border-purple-200/50 bg-gradient-to-b from-purple-100/70 via-purple-50/40 to-[#f8f4fc]">
-        {/* Background Ambient Glowing Orbs */}
-        <div className="pointer-events-none absolute -top-24 -left-20 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl"></div>
-        <div className="pointer-events-none absolute top-1/4 -right-20 w-96 h-96 bg-fuchsia-400/20 rounded-full blur-3xl"></div>
+      <section className="relative overflow-hidden pt-10 pb-16 md:pt-16 md:pb-24 border-b border-purple-200/70 bg-gradient-to-b from-purple-200/35 via-purple-100/25 to-[#f3e8fa]">
+        {/* Background Ambient Glowing Orbs - lightened for soft, elegant radiance */}
+        <div className="pointer-events-none absolute -top-24 -left-20 w-96 h-96 bg-purple-400/12 rounded-full blur-3xl"></div>
+        <div className="pointer-events-none absolute top-1/4 -right-20 w-96 h-96 bg-fuchsia-400/12 rounded-full blur-3xl"></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100 border border-purple-300/80 text-purple-800 text-xs font-extrabold shadow-xs">
-              <Sparkles className="w-4 h-4 text-purple-600" />
-              <span>Sync Your Resume & Career</span>
-            </div>
-            
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-stone-900 tracking-tight leading-tight">
               Understand Your Resume. <br />
               <span className="gradient-text">Discover Your Next Career Move.</span>
             </h1>
 
-            <p className="text-base sm:text-lg text-stone-600 leading-relaxed font-medium">
+            <p className="text-base sm:text-lg text-stone-700 leading-relaxed font-medium">
               An intelligent career companion that evaluates your ATS compatibility, tailors your resume for target job descriptions, identifies skill gaps, and guides freshers to ideal career roles.
             </p>
 
@@ -103,60 +117,130 @@ const LandingPage = () => {
             </div>
           </div>
 
-          {/* Hero Visual Mockup Card - Soft Purplish Tint */}
-          <div className="mt-12 max-w-4xl mx-auto bg-[#fbf7fd] rounded-2xl p-5 sm:p-6 border border-purple-200/80 shadow-2xl relative overflow-hidden text-stone-900">
-            <div className="flex items-center justify-between pb-3 border-b border-purple-200/60 text-xs text-stone-500 font-medium">
+          {/* Hero Visual Mockup Card */}
+          <div className="mt-12 max-w-4xl mx-auto bg-[#fbf7fd] rounded-2xl p-5 sm:p-6 border border-purple-300/80 shadow-2xl relative overflow-hidden text-stone-900">
+            <div className="flex items-center justify-between pb-3 border-b border-purple-200/70 text-xs text-stone-500 font-medium">
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full bg-rose-400"></span>
                 <span className="w-3 h-3 rounded-full bg-amber-400"></span>
                 <span className="w-3 h-3 rounded-full bg-emerald-400"></span>
-                <span className="ml-2 font-bold text-stone-800">SkillSync Dashboard Preview</span>
+                <span className="ml-2 font-bold text-stone-800">
+                  SkillSync Dashboard Preview {uploadedFileName ? `• ${uploadedFileName}` : (hasAnalyzedResume && resumeData?.contact?.fullName ? `• ${resumeData.contact.fullName}` : '')}
+                </span>
               </div>
-              <span className="hidden sm:inline bg-purple-100 text-purple-800 border border-purple-300/70 px-3 py-1 rounded-full font-bold">Live AI Preview</span>
+              {hasAnalyzedResume ? (
+                <span className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full font-bold text-[11px]">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span> Live User Analysis
+                </span>
+              ) : (
+                <span className="hidden sm:inline bg-purple-100 text-purple-800 border border-purple-300/70 px-3 py-1 rounded-full font-bold">
+                  Live AI Preview
+                </span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
               <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-xs">
                 <div className="text-xs text-stone-500 font-semibold">ATS Score</div>
-                <div className="text-2xl font-extrabold text-purple-600 mt-1">84<span className="text-xs text-stone-400">/100</span></div>
+                <div className="text-2xl font-extrabold text-purple-600 mt-1">
+                  {atsScore}<span className="text-xs text-stone-400">/100</span>
+                </div>
                 <div className="w-full bg-purple-50 h-2 rounded-full mt-2.5 overflow-hidden">
-                  <div className="bg-purple-600 h-full w-[84%]"></div>
+                  <div
+                    className="bg-purple-600 h-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, Math.max(0, atsScore))}%` }}
+                  ></div>
+                </div>
+                <div className="text-[11px] text-stone-500 mt-1.5 font-medium">
+                  {atsScore >= 80 ? 'ATS Compliant' : 'Optimization Needed'}
                 </div>
               </div>
 
               <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-xs">
                 <div className="text-xs text-stone-500 font-semibold">Target Job Match</div>
-                <div className="text-2xl font-extrabold text-violet-600 mt-1">72%</div>
+                <div className="text-2xl font-extrabold text-violet-600 mt-1">
+                  {jobMatchScore}%
+                </div>
                 <div className="w-full bg-purple-50 h-2 rounded-full mt-2.5 overflow-hidden">
-                  <div className="bg-violet-600 h-full w-[72%]"></div>
+                  <div
+                    className="bg-violet-600 h-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, Math.max(0, jobMatchScore))}%` }}
+                  ></div>
+                </div>
+                <div className="text-[11px] text-stone-500 mt-1.5 font-medium truncate">
+                  Role: {targetRole?.title || 'Frontend Developer'}
                 </div>
               </div>
 
               <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-xs">
                 <div className="text-xs text-stone-500 font-semibold">Action Items Identified</div>
-                <div className="text-2xl font-extrabold text-amber-600 mt-1">2 <span className="text-xs text-stone-400">Fix First</span></div>
-                <div className="flex gap-1.5 mt-2">
-                  <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold">Action Verbs</span>
+                <div className="text-2xl font-extrabold text-amber-600 mt-1">
+                  {pendingCount} <span className="text-xs text-stone-400">{pendingCount === 0 ? 'All Fixed' : 'Fix First'}</span>
+                </div>
+                <div className="flex gap-1.5 mt-2 flex-wrap">
+                  {pendingIssues.length > 0 ? (
+                    pendingIssues.slice(0, 2).map((issue, idx) => (
+                      <span key={idx} className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold truncate max-w-[120px]">
+                        {issue.section || issue.title}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold">
+                      100% Resolved
+                    </span>
+                  )}
                 </div>
               </div>
+            </div>
+
+            {/* Live Detected Skills & Quick Navigation */}
+            <div className="mt-4 pt-3.5 border-t border-purple-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-stone-700">
+                  Detected Skills ({technicalSkills.length}):
+                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {technicalSkills.slice(0, 6).map((skill, idx) => (
+                    <span
+                      key={idx}
+                      className="text-[11px] bg-purple-100/90 text-purple-800 font-semibold px-2 py-0.5 rounded-md border border-purple-200"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                  {technicalSkills.length > 6 && (
+                    <span className="text-[11px] text-stone-500 font-medium">
+                      +{technicalSkills.length - 6} more
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleProtectedAction('/resume-overview')}
+                className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 self-end sm:self-auto hover:underline transition-colors"
+              >
+                <span>View Full Analysis</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Quick Entry Cards Section */}
-      <section className="py-16 bg-gradient-to-b from-[#f8f4fc] via-purple-50/50 to-white border-b border-purple-200/50 relative z-10">
+      <section className="py-16 bg-gradient-to-b from-[#f3e8fa] via-purple-100/40 to-white border-b border-purple-200/60 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Choose Your Goal</h2>
-            <p className="text-sm text-stone-500 mt-2">Select the path that best fits your current career preparation stage.</p>
+            <p className="text-sm text-stone-600 mt-2">Select the path that best fits your current career preparation stage.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Entry Card 1 */}
             <div
               onClick={() => handleProtectedAction('/upload-resume')}
-              className="bg-[#fbf7fd] hover:bg-purple-100/50 rounded-3xl p-8 border-2 border-purple-200/80 hover:border-purple-600 shadow-soft shadow-card-hover cursor-pointer group transition-all"
+              className="bg-[#fbf7fd] hover:bg-purple-100/60 rounded-3xl p-8 border-2 border-purple-200/80 hover:border-purple-600 shadow-soft shadow-card-hover cursor-pointer group transition-all"
             >
               <div className="w-12 h-12 rounded-2xl bg-purple-100/90 text-purple-700 border border-purple-300/60 flex items-center justify-center mb-6 group-hover:bg-purple-600 group-hover:text-white transition-colors">
                 <FileCheck2 className="w-6 h-6" />
@@ -173,7 +257,7 @@ const LandingPage = () => {
             {/* Entry Card 2 */}
             <div
               onClick={() => handleProtectedAction('/career-discovery')}
-              className="bg-[#fbf7fd] hover:bg-purple-100/50 rounded-3xl p-8 border-2 border-purple-200/80 hover:border-purple-600 shadow-soft shadow-card-hover cursor-pointer group transition-all"
+              className="bg-[#fbf7fd] hover:bg-purple-100/60 rounded-3xl p-8 border-2 border-purple-200/80 hover:border-purple-600 shadow-soft shadow-card-hover cursor-pointer group transition-all"
             >
               <div className="w-12 h-12 rounded-2xl bg-purple-100/90 text-purple-700 border border-purple-300/60 flex items-center justify-center mb-6 group-hover:bg-purple-600 group-hover:text-white transition-colors">
                 <Compass className="w-6 h-6" />
@@ -191,11 +275,11 @@ const LandingPage = () => {
       </section>
 
       {/* Connected 4-Step How It Works Section */}
-      <section id="how-it-works" className="py-20 bg-gradient-to-b from-white via-purple-50/40 to-[#f8f4fc] border-b border-purple-200/50 relative z-10">
+      <section id="how-it-works" className="py-20 bg-gradient-to-b from-white via-purple-100/40 to-[#f3e8fa] border-b border-purple-200/60 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">How SkillSync Works</h2>
-            <p className="text-sm text-stone-500 mt-2">Click any step to view its detailed step-by-step workflow explanation.</p>
+            <p className="text-sm text-stone-600 mt-2">Click any step to view its detailed step-by-step workflow explanation.</p>
           </div>
 
           {/* Connected Steps Grid with Connector Line */}
@@ -238,11 +322,11 @@ const LandingPage = () => {
       </section>
 
       {/* Features Grid Section */}
-      <section id="features" className="py-16 bg-gradient-to-b from-[#f8f4fc] via-fuchsia-50/30 to-purple-50/50 border-b border-purple-200/50 relative z-10">
+      <section id="features" className="py-16 bg-gradient-to-b from-[#f3e8fa] via-purple-50/30 to-[#f3e8fa] border-b border-purple-200/60 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Platform Services</h2>
-            <p className="text-sm text-stone-500 mt-2">Click any service card to view its detailed step-by-step working process.</p>
+            <p className="text-sm text-stone-600 mt-2">Click any service card to view its detailed step-by-step working process.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -275,8 +359,8 @@ const LandingPage = () => {
 
           <div className="text-center mt-10">
             <button
-              onClick={() => navigate('/resume-services')}
-              className="inline-flex items-center gap-2 text-xs font-bold text-purple-700 hover:text-purple-900 bg-white hover:bg-purple-50 px-6 py-3 rounded-xl border border-purple-300 shadow-xs"
+              onClick={() => handleProtectedAction('/resume-services')}
+              className="inline-flex items-center gap-2 text-xs font-bold text-purple-800 hover:text-purple-950 bg-white hover:bg-purple-100/60 px-6 py-3 rounded-xl border border-purple-300 shadow-xs transition-colors"
             >
               Explore All Services <ArrowRight className="w-4 h-4" />
             </button>
@@ -285,11 +369,11 @@ const LandingPage = () => {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-16 bg-gradient-to-b from-purple-50/50 to-[#f8f4fc] relative z-10">
+      <section id="faq" className="py-16 bg-gradient-to-b from-purple-50/40 to-[#f3e8fa] relative z-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Frequently Asked Questions</h2>
-            <p className="text-sm text-stone-500 mt-2">Everything you need to know about SkillSync.</p>
+            <p className="text-sm text-stone-600 mt-2">Everything you need to know about SkillSync.</p>
           </div>
 
           <div className="space-y-4">

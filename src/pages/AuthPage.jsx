@@ -1,23 +1,64 @@
 // src/pages/AuthPage.jsx
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link, Navigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Sparkles, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Sparkles, Mail, Lock, User, ArrowRight, ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 const AuthPage = () => {
   const navigate = useNavigate();
-  const { login } = useApp();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const location = useLocation();
+  const { isAuthenticated, registerUser, loginUser, login } = useApp();
+
+  const isSignupRoute = location.pathname === '/signup';
+  const [isSignUp, setIsSignUp] = useState(isSignupRoute);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [feedback, setFeedback] = useState({ type: '', message: '' });
+
+  useEffect(() => {
+    setIsSignUp(location.pathname === '/signup');
+  }, [location.pathname]);
+
+  // If already authenticated, redirect to workspace dashboard immediately
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const fromRoute = location.state?.from;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const displayName = fullName.trim();
-    login(email || 'user@example.com', password, displayName);
-    navigate('/dashboard');
+    setFeedback({ type: '', message: '' });
+
+    if (isSignUp) {
+      if (!fullName.trim()) {
+        setFeedback({ type: 'error', message: 'Please enter your full name.' });
+        return;
+      }
+      const res = registerUser(email, password, fullName.trim());
+      if (!res.success) {
+        setFeedback({ type: 'error', message: res.message });
+      } else {
+        const destination = fromRoute && fromRoute !== '/' ? fromRoute : '/dashboard';
+        navigate(destination);
+      }
+    } else {
+      const res = loginUser(email, password);
+      if (!res.success) {
+        setFeedback({ type: 'error', message: res.message });
+      } else {
+        const destination = fromRoute && fromRoute !== '/' ? fromRoute : '/dashboard';
+        navigate(destination);
+      }
+    }
+  };
+
+  const handleQuickDemo = () => {
+    login('user@college.edu', 'password123', 'Alex Morgan');
+    const destination = fromRoute && fromRoute !== '/' ? fromRoute : '/dashboard';
+    navigate(destination);
   };
 
   return (
@@ -28,7 +69,7 @@ const AuthPage = () => {
         <div className="absolute top-1/3 left-1/4 w-80 h-80 bg-fuchsia-400/20 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="w-full max-w-md space-y-6 relative z-10">
+      <div className="w-full max-w-md space-y-5 relative z-10">
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <Link to="/" className="inline-flex items-center gap-2 group">
@@ -38,17 +79,25 @@ const AuthPage = () => {
             <span className="font-extrabold text-2xl text-stone-900 tracking-tight">SkillSync</span>
           </Link>
           <p className="text-xs text-stone-500 font-medium">
-            {isSignUp ? 'Create your account to get started' : 'Welcome back! Sign in to access your workspace'}
+            {isSignUp ? 'Create your account to unlock platform services' : 'Welcome back! Sign in to access your workspace'}
           </p>
         </div>
 
+        {/* Protected Route Redirect Notice */}
+        {fromRoute && (
+          <div className="bg-amber-50 border border-amber-300 text-amber-900 p-3.5 rounded-2xl text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+            <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
+            <span>Please Sign In or Create an Account to access requested services.</span>
+          </div>
+        )}
+
         {/* Auth Card */}
-        <div className="bg-[#fbf7fd] rounded-3xl p-6 sm:p-8 border-2 border-purple-200/80 hover:border-purple-400 shadow-xl space-y-6 transition-all">
+        <div className="bg-[#fbf7fd] rounded-3xl p-6 sm:p-8 border-2 border-purple-200/80 hover:border-purple-400 shadow-xl space-y-5 transition-all">
           {/* Sign In / Sign Up Tab Toggle */}
           <div className="flex bg-purple-100/70 p-1 rounded-xl text-xs font-bold border border-purple-200/80">
             <button
               type="button"
-              onClick={() => setIsSignUp(false)}
+              onClick={() => { setIsSignUp(false); setFeedback({ type: '', message: '' }); }}
               className={`flex-1 py-2 rounded-lg transition-all ${
                 !isSignUp ? 'bg-purple-600 text-white shadow-md' : 'text-stone-600 hover:text-purple-700 hover:bg-purple-200/50'
               }`}
@@ -57,7 +106,7 @@ const AuthPage = () => {
             </button>
             <button
               type="button"
-              onClick={() => setIsSignUp(true)}
+              onClick={() => { setIsSignUp(true); setFeedback({ type: '', message: '' }); }}
               className={`flex-1 py-2 rounded-lg transition-all ${
                 isSignUp ? 'bg-purple-600 text-white shadow-md' : 'text-stone-600 hover:text-purple-700 hover:bg-purple-200/50'
               }`}
@@ -65,6 +114,16 @@ const AuthPage = () => {
               Create Account
             </button>
           </div>
+
+          {/* Feedback message */}
+          {feedback.message && (
+            <div className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+              feedback.type === 'error' ? 'bg-rose-50 border border-rose-200 text-rose-800' : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            }`}>
+              {feedback.type === 'error' ? <ShieldAlert className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+              <span>{feedback.message}</span>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -78,7 +137,7 @@ const AuthPage = () => {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your name"
+                    placeholder="e.g. Alex Morgan"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-purple-200 text-stone-900 text-xs focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 placeholder:text-stone-400 shadow-xs transition-all"
                   />
                 </div>
@@ -119,11 +178,11 @@ const AuthPage = () => {
               type="submit"
               className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white font-bold text-xs shadow-lg shadow-purple-600/30 transition-all flex items-center justify-center gap-2 hover:scale-[1.01]"
             >
-              {isSignUp ? 'Create Account' : 'Sign In to Workspace'} <ArrowRight className="w-4 h-4" />
+              {isSignUp ? 'Create Account & Access Services' : 'Sign In to Workspace'} <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
-          {/* Social Sign In Option */}
+          {/* Social / Demo Sign In Option */}
           <div className="relative pt-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-purple-200/80"></div>
@@ -136,7 +195,7 @@ const AuthPage = () => {
           <div className="grid grid-cols-1 gap-3">
             <button
               type="button"
-              onClick={() => { login('user@example.com', 'pass', ''); navigate('/dashboard'); }}
+              onClick={handleQuickDemo}
               className="py-2.5 px-3 rounded-xl border border-purple-300/80 bg-purple-50/80 hover:bg-purple-100 text-xs font-bold text-purple-700 flex items-center justify-center gap-2 transition-colors shadow-xs"
             >
               ⚡ Quick Demo Sign In

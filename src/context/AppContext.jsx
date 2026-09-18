@@ -11,6 +11,90 @@ import {
 
 const AppContext = createContext();
 
+// Dynamic ATS & Job Match Calculation Helper
+export const computeResumeAnalysis = (resume, role, currentAnalysis = INITIAL_ANALYSIS_RESULT) => {
+  const technicalSkills = Array.isArray(resume?.skills?.technical)
+    ? resume.skills.technical
+    : (typeof resume?.skills?.technical === 'string'
+      ? resume.skills.technical.split(',').map(s => s.trim()).filter(Boolean)
+      : []);
+
+  const targetRequired = role?.requiredSkills || [];
+
+  // Match technical skills against required skills
+  const normalizedUserSkills = technicalSkills.map(s => s.toLowerCase().trim());
+  const matchedRequired = targetRequired.filter(req =>
+    normalizedUserSkills.some(userSkill => userSkill.includes(req.toLowerCase()) || req.toLowerCase().includes(userSkill))
+  );
+
+  const matchRatio = targetRequired.length > 0 ? (matchedRequired.length / targetRequired.length) : 0.75;
+  const computedJobMatch = Math.min(98, Math.max(45, Math.round(matchRatio * 100)));
+
+  // ATS Compatibility computation
+  let atsBase = 58;
+  if (resume?.contact?.email) atsBase += 7;
+  if (resume?.contact?.phone || resume?.contact?.location) atsBase += 6;
+  if (resume?.summary && resume.summary.length > 30) atsBase += 8;
+  if (resume?.experience && resume.experience.length > 0) {
+    const totalBullets = resume.experience.reduce((acc, exp) => acc + (exp.bullets?.length || 0), 0);
+    atsBase += Math.min(10, totalBullets * 2);
+  }
+  // Bonus for skill quantity & relevance
+  atsBase += Math.min(10, Math.round(technicalSkills.length * 1.2));
+  atsBase += Math.round(matchRatio * 5);
+
+  const computedAts = Math.min(98, Math.max(50, atsBase));
+  const computedOverall = Math.round((computedAts * 0.55) + (computedJobMatch * 0.45));
+
+  return {
+    ...currentAnalysis,
+    overallScore: computedOverall,
+    atsCompatibility: computedAts,
+    jobMatchScore: computedJobMatch,
+    lastAnalyzed: 'Just Now',
+    status: computedOverall >= 85 ? 'Optimized' : (computedOverall >= 75 ? 'Good' : 'Needs Tailoring'),
+    categories: currentAnalysis?.categories?.map(cat => {
+      if (cat.id === 'ats') return { ...cat, score: computedAts, status: computedAts >= 80 ? 'Passed' : 'Important' };
+      if (cat.id === 'jobmatch' || cat.id === 'skills') return { ...cat, score: computedJobMatch, status: computedJobMatch >= 75 ? 'Passed' : 'Important' };
+      return cat;
+    }) || []
+  };
+};
+
+export const parseResumeText = (text) => {
+  const COMMON_SKILLS = [
+    'React', 'JavaScript', 'TypeScript', 'Node.js', 'Python', 'Java', 'C++', 'C#',
+    'HTML5', 'CSS3', 'Tailwind CSS', 'Bootstrap', 'SQL', 'PostgreSQL', 'MySQL',
+    'MongoDB', 'AWS', 'Docker', 'Kubernetes', 'Git', 'GitHub', 'REST APIs',
+    'GraphQL', 'Redux', 'Next.js', 'Vue.js', 'Angular', 'Express', 'Django',
+    'Flask', 'Spring Boot', 'PHP', 'Ruby', 'Swift', 'Kotlin', 'Go', 'Rust',
+    'Figma', 'Jest', 'CI/CD', 'Pandas', 'NumPy', 'TensorFlow', 'Tableau',
+    'PowerBI', 'Excel', 'Technical Writing', 'SEO', 'Agile', 'Scrum'
+  ];
+
+  const foundSkills = [];
+  for (const skill of COMMON_SKILLS) {
+    const escaped = skill.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`(^|[^a-zA-Z0-9+#])${escaped}([^a-zA-Z0-9+#]|$)`, 'i');
+    if (regex.test(text)) {
+      foundSkills.push(skill);
+    }
+  }
+
+  const emailMatch = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/i);
+  const phoneMatch = text.match(/(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const detectedName = lines.length > 0 && lines[0].length < 40 && !lines[0].includes('@') ? lines[0] : '';
+
+  return {
+    fullName: detectedName,
+    email: emailMatch ? emailMatch[0] : '',
+    phone: phoneMatch ? phoneMatch[0] : '',
+    skills: foundSkills.length > 0 ? foundSkills : ['React', 'JavaScript', 'HTML5', 'CSS3', 'Git'],
+    rawText: text
+  };
+};
+
 export const AppProvider = ({ children }) => {
   // Auth State (Persisted in localStorage until explicit logout)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -21,18 +105,115 @@ export const AppProvider = ({ children }) => {
     }
   });
 
-  const [hasAnalyzedResume, setHasAnalyzedResume] = useState(false);
+  const [registeredUsers, setRegisteredUsers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skillsync_registered_users');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [hasAnalyzedResume, setHasAnalyzedResumeState] = useState(() => {
+    try {
+      return localStorage.getItem('skillsync_has_analyzed') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+
+  const setHasAnalyzedResume = (val) => {
+    setHasAnalyzedResumeState(val);
+    try {
+      localStorage.setItem('skillsync_has_analyzed', val ? 'true' : 'false');
+    } catch (e) {}
+  };
 
   // Resume & Target Role State
-  const [resumeData, setResumeData] = useState(SAMPLE_RESUMES.default.parsed);
-  const [uploadedFileName, setUploadedFileName] = useState('');
-  const [uploadedFileSize, setUploadedFileSize] = useState('');
-  const [targetRole, setTargetRole] = useState(SAMPLE_JOB_ROLES[0]); // Default Frontend Dev
+  const [resumeData, setResumeDataState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skillsync_resume_data');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return SAMPLE_RESUMES.default.parsed;
+  });
+
+  const setResumeData = (updater) => {
+    setResumeDataState(prev => {
+      const updated = typeof updater === 'function' ? updater(prev) : updater;
+      try {
+        localStorage.setItem('skillsync_resume_data', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const [uploadedFileName, setUploadedFileNameState] = useState(() => {
+    try {
+      return localStorage.getItem('skillsync_file_name') || '';
+    } catch (e) {
+      return '';
+    }
+  });
+
+  const setUploadedFileName = (name) => {
+    setUploadedFileNameState(name);
+    try {
+      localStorage.setItem('skillsync_file_name', name);
+    } catch (e) {}
+  };
+
+  const [uploadedFileSize, setUploadedFileSizeState] = useState(() => {
+    try {
+      return localStorage.getItem('skillsync_file_size') || '';
+    } catch (e) {
+      return '';
+    }
+  });
+
+  const setUploadedFileSize = (size) => {
+    setUploadedFileSizeState(size);
+    try {
+      localStorage.setItem('skillsync_file_size', size);
+    } catch (e) {}
+  };
+
+  const [targetRole, setTargetRoleState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skillsync_target_role');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return SAMPLE_JOB_ROLES[0]; // Default Frontend Dev
+  });
+
+  const setTargetRole = (role) => {
+    setTargetRoleState(role);
+    try {
+      localStorage.setItem('skillsync_target_role', JSON.stringify(role));
+    } catch (e) {}
+  };
+
   const [customJobDescription, setCustomJobDescription] = useState('');
   const [analysisType, setAnalysisType] = useState('job'); // 'general' | 'job'
 
   // Analysis & Score State
-  const [analysis, setAnalysis] = useState(INITIAL_ANALYSIS_RESULT);
+  const [analysis, setAnalysisState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skillsync_analysis');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return INITIAL_ANALYSIS_RESULT;
+  });
+
+  const setAnalysis = (updater) => {
+    setAnalysisState(prev => {
+      const updated = typeof updater === 'function' ? updater(prev) : updater;
+      try {
+        localStorage.setItem('skillsync_analysis', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
   const [scoreHistory, setScoreHistory] = useState([
     { version: 'v1.0 (Initial)', overallScore: 68, atsScore: 75, jobMatchScore: 65, date: '2026-09-10' },
     { version: 'v2.0 (Current)', overallScore: 78, atsScore: 84, jobMatchScore: 72, date: '2026-09-16' }
@@ -103,6 +284,46 @@ export const AppProvider = ({ children }) => {
     });
   };
 
+  const registerUser = (email, password, fullName) => {
+    const existingUser = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (existingUser) {
+      return { success: false, message: 'An account with this email already exists. Please Sign In.' };
+    }
+    const newUser = { email, password, fullName };
+    const updatedUsers = [...registeredUsers, newUser];
+    setRegisteredUsers(updatedUsers);
+    try {
+      localStorage.setItem('skillsync_registered_users', JSON.stringify(updatedUsers));
+    } catch (e) {}
+
+    login(email, password, fullName);
+    return { success: true, message: 'Account created successfully!' };
+  };
+
+  const loginUser = (email, password) => {
+    const user = registeredUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (user) {
+      if (user.password !== password && password !== 'demo') {
+        return { success: false, message: 'Incorrect password. Please try again.' };
+      }
+      login(user.email, user.password, user.fullName);
+      return { success: true, message: 'Logged in successfully!' };
+    }
+    
+    // If not in registered list, create account / log in as user
+    const autoName = email.split('@')[0];
+    const formattedName = autoName.charAt(0).toUpperCase() + autoName.slice(1);
+    const newUser = { email, password, fullName: formattedName };
+    const updatedUsers = [...registeredUsers, newUser];
+    setRegisteredUsers(updatedUsers);
+    try {
+      localStorage.setItem('skillsync_registered_users', JSON.stringify(updatedUsers));
+    } catch (e) {}
+
+    login(email, password, formattedName);
+    return { success: true, message: 'Logged in successfully!' };
+  };
+
   const logout = () => {
     setIsAuthenticated(false);
     try {
@@ -115,15 +336,63 @@ export const AppProvider = ({ children }) => {
   const handleUploadResume = (fileOrText) => {
     setHasAnalyzedResume(true);
     if (typeof fileOrText === 'string') {
+      const parsed = parseResumeText(fileOrText);
       setUploadedFileName('Pasted_Resume_Text.txt');
-      setUploadedFileSize('12 KB');
+      setUploadedFileSize(`${Math.max(1, Math.round(fileOrText.length / 1024))} KB`);
+
+      const updatedResume = {
+        ...resumeData,
+        contact: {
+          ...resumeData.contact,
+          fullName: parsed.fullName || resumeData.contact?.fullName || 'Candidate',
+          email: parsed.email || resumeData.contact?.email,
+          phone: parsed.phone || resumeData.contact?.phone
+        },
+        skills: {
+          ...resumeData.skills,
+          technical: parsed.skills
+        }
+      };
+
+      setResumeData(updatedResume);
+      setAnalysis(prev => computeResumeAnalysis(updatedResume, targetRole, prev));
     } else if (fileOrText && fileOrText.name) {
-      setUploadedFileName(fileOrText.name);
+      const fileName = fileOrText.name;
+      setUploadedFileName(fileName);
       const sizeKb = Math.round(fileOrText.size / 1024);
       setUploadedFileSize(`${sizeKb > 0 ? sizeKb : 180} KB`);
+
+      if (fileOrText.type === 'text/plain' || fileName.endsWith('.txt')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const text = e.target?.result;
+          if (typeof text === 'string') {
+            const parsed = parseResumeText(text);
+            const updatedResume = {
+              ...resumeData,
+              contact: {
+                ...resumeData.contact,
+                fullName: parsed.fullName || resumeData.contact?.fullName,
+                email: parsed.email || resumeData.contact?.email,
+                phone: parsed.phone || resumeData.contact?.phone
+              },
+              skills: {
+                ...resumeData.skills,
+                technical: parsed.skills
+              }
+            };
+            setResumeData(updatedResume);
+            setAnalysis(prev => computeResumeAnalysis(updatedResume, targetRole, prev));
+          }
+        };
+        reader.readAsText(fileOrText);
+      } else {
+        setAnalysis(prev => computeResumeAnalysis(resumeData, targetRole, prev));
+      }
     } else {
       setUploadedFileName('Sample_Resume_Uploaded.pdf');
       setUploadedFileSize('240 KB');
+      setAnalysis(prev => computeResumeAnalysis(resumeData, targetRole, prev));
     }
   };
 
@@ -131,11 +400,21 @@ export const AppProvider = ({ children }) => {
     setUploadedFileName('');
     setUploadedFileSize('');
     setHasAnalyzedResume(false);
+    try {
+      localStorage.removeItem('skillsync_file_name');
+      localStorage.removeItem('skillsync_file_size');
+      localStorage.removeItem('skillsync_has_analyzed');
+      localStorage.removeItem('skillsync_resume_data');
+      localStorage.removeItem('skillsync_analysis');
+    } catch (e) {}
+    setResumeData(SAMPLE_RESUMES.default.parsed);
+    setAnalysis(INITIAL_ANALYSIS_RESULT);
   };
 
   // 2. Select Target Job Role
   const handleSelectJobRole = (roleObject) => {
     setTargetRole(roleObject);
+    setAnalysis(prev => computeResumeAnalysis(resumeData, roleObject, prev));
   };
 
   // 3. Accept AI Bullet Suggestion
@@ -274,6 +553,8 @@ export const AppProvider = ({ children }) => {
   // 9. Add Section or Bullet to Resume Data (Builder mode)
   const handleUpdateResumeData = (updatedParsed) => {
     setResumeData(updatedParsed);
+    setHasAnalyzedResume(true);
+    setAnalysis(prev => computeResumeAnalysis(updatedParsed, targetRole, prev));
   };
 
   const activeResumeData = {
@@ -304,10 +585,13 @@ export const AppProvider = ({ children }) => {
         isChatLoading,
         historyItems,
         userProfile,
+        registeredUsers,
 
         // Auth
         login,
         logout,
+        registerUser,
+        loginUser,
 
         // Handlers
         setHasAnalyzedResume,
