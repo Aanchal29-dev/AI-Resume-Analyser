@@ -8,10 +8,12 @@ import {
   INITIAL_AI_CHAT_MESSAGES,
   MOCK_HISTORY_ITEMS
 } from '../data/mockData';
+import { validateResumeContent, calculateSectionCompleteness } from '../utils/resumeValidator';
+import { getGeminiApiKey, setGeminiApiKey as saveGeminiApiKey } from '../services/geminiService';
 
 const AppContext = createContext();
 
-// Dynamic ATS & Job Match Calculation Helper
+// Dynamic ATS & Job Match Calculation Helper based on actual content completeness
 export const computeResumeAnalysis = (resume, role, currentAnalysis = INITIAL_ANALYSIS_RESULT) => {
   const technicalSkills = Array.isArray(resume?.skills?.technical)
     ? resume.skills.technical
@@ -27,23 +29,27 @@ export const computeResumeAnalysis = (resume, role, currentAnalysis = INITIAL_AN
     normalizedUserSkills.some(userSkill => userSkill.includes(req.toLowerCase()) || req.toLowerCase().includes(userSkill))
   );
 
-  const matchRatio = targetRequired.length > 0 ? (matchedRequired.length / targetRequired.length) : 0.75;
-  const computedJobMatch = Math.min(98, Math.max(45, Math.round(matchRatio * 100)));
+  const matchRatio = targetRequired.length > 0 ? (matchedRequired.length / targetRequired.length) : 0.65;
+  const computedJobMatch = Math.min(96, Math.max(35, Math.round(matchRatio * 100)));
 
-  // ATS Compatibility computation
-  let atsBase = 58;
-  if (resume?.contact?.email) atsBase += 7;
-  if (resume?.contact?.phone || resume?.contact?.location) atsBase += 6;
-  if (resume?.summary && resume.summary.length > 30) atsBase += 8;
-  if (resume?.experience && resume.experience.length > 0) {
-    const totalBullets = resume.experience.reduce((acc, exp) => acc + (exp.bullets?.length || 0), 0);
-    atsBase += Math.min(10, totalBullets * 2);
+  // ATS Compatibility computation from true section availability
+  const completeness = calculateSectionCompleteness(resume);
+  let atsBase = 25; // Base starting points
+
+  if (completeness.sections.contact) atsBase += 15;
+  if (completeness.sections.summary) atsBase += 10;
+  if (completeness.sections.experience) {
+    const totalBullets = resume.experience?.reduce((acc, exp) => acc + (exp.bullets?.length || 0), 0) || 0;
+    atsBase += Math.min(20, 10 + totalBullets * 2);
   }
-  // Bonus for skill quantity & relevance
-  atsBase += Math.min(10, Math.round(technicalSkills.length * 1.2));
-  atsBase += Math.round(matchRatio * 5);
+  if (completeness.sections.projects) atsBase += 12;
+  if (completeness.sections.skills) atsBase += Math.min(10, Math.round(technicalSkills.length * 1.2));
+  if (completeness.sections.education) atsBase += 10;
 
-  const computedAts = Math.min(98, Math.max(50, atsBase));
+  // Keyword relevance bonus
+  atsBase += Math.round(matchRatio * 8);
+
+  const computedAts = Math.min(94, Math.max(40, atsBase));
   const computedOverall = Math.round((computedAts * 0.55) + (computedJobMatch * 0.45));
 
   return {
@@ -51,11 +57,13 @@ export const computeResumeAnalysis = (resume, role, currentAnalysis = INITIAL_AN
     overallScore: computedOverall,
     atsCompatibility: computedAts,
     jobMatchScore: computedJobMatch,
+    sectionCompleteness: completeness,
     lastAnalyzed: 'Just Now',
-    status: computedOverall >= 85 ? 'Optimized' : (computedOverall >= 75 ? 'Good' : 'Needs Tailoring'),
+    status: computedOverall >= 82 ? 'Optimized' : (computedOverall >= 68 ? 'Good' : 'Needs Tailoring'),
     categories: currentAnalysis?.categories?.map(cat => {
       if (cat.id === 'ats') return { ...cat, score: computedAts, status: computedAts >= 80 ? 'Passed' : 'Important' };
-      if (cat.id === 'jobmatch' || cat.id === 'skills') return { ...cat, score: computedJobMatch, status: computedJobMatch >= 75 ? 'Passed' : 'Important' };
+      if (cat.id === 'jobmatch' || cat.id === 'skills') return { ...cat, score: computedJobMatch, status: computedJobMatch >= 70 ? 'Passed' : 'Important' };
+      if (cat.id === 'structure') return { ...cat, score: completeness.percentage, status: completeness.percentage >= 80 ? 'Passed' : 'Important' };
       return cat;
     }) || []
   };
@@ -84,18 +92,34 @@ export const parseResumeText = (text) => {
   const emailMatch = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/i);
   const phoneMatch = text.match(/(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  const detectedName = lines.length > 0 && lines[0].length < 40 && !lines[0].includes('@') ? lines[0] : '';
+  const detectedName = lines.length > 0 && lines[0].length < 40 && !lines[0].includes('@') ? lines[0] : 'Candidate';
+
+  // Extract Summary if present
+  let summary = '';
+  const summaryIdx = lines.findIndex(l => /summary|objective|profile|about/i.test(l));
+  if (summaryIdx !== -1 && lines[summaryIdx + 1]) {
+    summary = lines.slice(summaryIdx + 1, summaryIdx + 4).join(' ');
+  }
 
   return {
     fullName: detectedName,
     email: emailMatch ? emailMatch[0] : '',
     phone: phoneMatch ? phoneMatch[0] : '',
-    skills: foundSkills.length > 0 ? foundSkills : ['React', 'JavaScript', 'HTML5', 'CSS3', 'Git'],
+    summary: summary || 'Professional with practical experience and passion for industry best practices.',
+    skills: foundSkills.length > 0 ? foundSkills : ['JavaScript', 'HTML5', 'CSS3', 'Git', 'Problem Solving'],
     rawText: text
   };
 };
 
 export const AppProvider = ({ children }) => {
+  // Gemini API Key State
+  const [geminiApiKey, setGeminiApiKeyState] = useState(() => getGeminiApiKey());
+
+  const updateGeminiApiKey = (key) => {
+    saveGeminiApiKey(key);
+    setGeminiApiKeyState(key ? key.trim() : '');
+  };
+
   // Auth State (Persisted in localStorage until explicit logout)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try {
@@ -233,7 +257,7 @@ export const AppProvider = ({ children }) => {
   // Analysis History State
   const [historyItems, setHistoryItems] = useState(MOCK_HISTORY_ITEMS);
 
-  // Profile / Settings State - Default name is empty string ("")
+  // Profile / Settings State
   const [userProfile, setUserProfileState] = useState(() => {
     const defaultProfile = {
       fullName: '',
@@ -332,67 +356,119 @@ export const AppProvider = ({ children }) => {
     } catch (e) {}
   };
 
-  // 1. Upload Resume
-  const handleUploadResume = (fileOrText) => {
-    setHasAnalyzedResume(true);
+  // 1. Upload & Validate Resume (Async Validation)
+  const handleUploadResume = async (fileOrText) => {
+    // 1. If Text string is passed
     if (typeof fileOrText === 'string') {
-      const parsed = parseResumeText(fileOrText);
+      const validation = await validateResumeContent(fileOrText, 'Pasted_Resume_Text.txt', 'text/plain');
+      if (!validation.isValid) {
+        return { success: false, error: validation.error };
+      }
+
+      setHasAnalyzedResume(true);
       setUploadedFileName('Pasted_Resume_Text.txt');
       setUploadedFileSize(`${Math.max(1, Math.round(fileOrText.length / 1024))} KB`);
 
-      const updatedResume = {
-        ...resumeData,
-        contact: {
-          ...resumeData.contact,
-          fullName: parsed.fullName || resumeData.contact?.fullName || 'Candidate',
-          email: parsed.email || resumeData.contact?.email,
-          phone: parsed.phone || resumeData.contact?.phone
-        },
-        skills: {
-          ...resumeData.skills,
-          technical: parsed.skills
-        }
-      };
+      let updatedResume = { ...resumeData };
+
+      if (validation.parsedData) {
+        // If Gemini AI parsed it
+        updatedResume = { ...resumeData, ...validation.parsedData };
+      } else {
+        const parsed = parseResumeText(fileOrText);
+        updatedResume = {
+          ...resumeData,
+          contact: {
+            ...resumeData.contact,
+            fullName: parsed.fullName || resumeData.contact?.fullName || 'Candidate',
+            email: parsed.email || resumeData.contact?.email,
+            phone: parsed.phone || resumeData.contact?.phone
+          },
+          summary: parsed.summary || resumeData.summary,
+          skills: {
+            ...resumeData.skills,
+            technical: parsed.skills
+          }
+        };
+      }
 
       setResumeData(updatedResume);
       setAnalysis(prev => computeResumeAnalysis(updatedResume, targetRole, prev));
-    } else if (fileOrText && fileOrText.name) {
+      return { success: true };
+    } 
+    
+    // 2. If File object is passed
+    else if (fileOrText && fileOrText.name) {
       const fileName = fileOrText.name;
-      setUploadedFileName(fileName);
+      const fileType = fileOrText.type || '';
       const sizeKb = Math.round(fileOrText.size / 1024);
-      setUploadedFileSize(`${sizeKb > 0 ? sizeKb : 180} KB`);
 
-      if (fileOrText.type === 'text/plain' || fileName.endsWith('.txt')) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const text = e.target?.result;
-          if (typeof text === 'string') {
-            const parsed = parseResumeText(text);
-            const updatedResume = {
-              ...resumeData,
-              contact: {
-                ...resumeData.contact,
-                fullName: parsed.fullName || resumeData.contact?.fullName,
-                email: parsed.email || resumeData.contact?.email,
-                phone: parsed.phone || resumeData.contact?.phone
-              },
-              skills: {
-                ...resumeData.skills,
-                technical: parsed.skills
+      // Handle plain text files
+      if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = async (e) => {
+            const text = e.target?.result;
+            if (typeof text === 'string') {
+              const validation = await validateResumeContent(text, fileName, fileType);
+              if (!validation.isValid) {
+                resolve({ success: false, error: validation.error });
+                return;
               }
-            };
-            setResumeData(updatedResume);
-            setAnalysis(prev => computeResumeAnalysis(updatedResume, targetRole, prev));
-          }
-        };
-        reader.readAsText(fileOrText);
-      } else {
+
+              setHasAnalyzedResume(true);
+              setUploadedFileName(fileName);
+              setUploadedFileSize(`${sizeKb > 0 ? sizeKb : 1} KB`);
+
+              const parsed = parseResumeText(text);
+              const updatedResume = {
+                ...resumeData,
+                contact: {
+                  ...resumeData.contact,
+                  fullName: parsed.fullName || resumeData.contact?.fullName,
+                  email: parsed.email || resumeData.contact?.email,
+                  phone: parsed.phone || resumeData.contact?.phone
+                },
+                summary: parsed.summary || resumeData.summary,
+                skills: {
+                  ...resumeData.skills,
+                  technical: parsed.skills
+                }
+              };
+              setResumeData(updatedResume);
+              setAnalysis(prev => computeResumeAnalysis(updatedResume, targetRole, prev));
+              resolve({ success: true });
+            } else {
+              resolve({ success: false, error: 'Could not read text content from the file.' });
+            }
+          };
+          reader.readAsText(fileOrText);
+        });
+      } 
+      
+      // Handle PDF, DOCX, Images
+      else {
+        // Run validation check on filename/type
+        const validation = await validateResumeContent('', fileName, fileType);
+        if (!validation.isValid) {
+          return { success: false, error: validation.error };
+        }
+
+        setHasAnalyzedResume(true);
+        setUploadedFileName(fileName);
+        setUploadedFileSize(`${sizeKb > 0 ? sizeKb : 240} KB`);
         setAnalysis(prev => computeResumeAnalysis(resumeData, targetRole, prev));
+        return { success: true };
       }
-    } else {
+    } 
+    
+    // 3. Fallback sample resume (if triggered without args)
+    else {
+      setHasAnalyzedResume(true);
       setUploadedFileName('Sample_Resume_Uploaded.pdf');
       setUploadedFileSize('240 KB');
       setAnalysis(prev => computeResumeAnalysis(resumeData, targetRole, prev));
+      return { success: true };
     }
   };
 
@@ -586,6 +662,7 @@ export const AppProvider = ({ children }) => {
         historyItems,
         userProfile,
         registeredUsers,
+        geminiApiKey,
 
         // Auth
         login,
@@ -594,6 +671,7 @@ export const AppProvider = ({ children }) => {
         loginUser,
 
         // Handlers
+        updateGeminiApiKey,
         setHasAnalyzedResume,
         setAnalysisType,
         setCustomJobDescription,
