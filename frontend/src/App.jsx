@@ -26,8 +26,6 @@ import AIAssistantPage from './pages/AIAssistantPage';
 import RecommendationsPage from './pages/RecommendationsPage';
 import LearningPlanPage from './pages/LearningPlanPage';
 import HistoryPage from './pages/HistoryPage';
-import ProfilePage from './pages/ProfilePage';
-import SettingsPage from './pages/SettingsPage';
 
 // Protected Route Guard Component
 const ProtectedRoute = ({ children }) => {
@@ -68,14 +66,14 @@ function AppRoutes() {
         <Route path="/career-discovery/results" element={<ProtectedRoute><CareerResultsPage /></ProtectedRoute>} />
         <Route path="/career-discovery/role/:id" element={<ProtectedRoute><RoleDetailsPage /></ProtectedRoute>} />
 
-        {/* Builder, AI Assistant, Recommendations, Settings */}
+        {/* Builder, AI Assistant, Recommendations */}
         <Route path="/resume-builder" element={<ProtectedRoute><ResumeBuilderPage /></ProtectedRoute>} />
         <Route path="/ai-assistant" element={<ProtectedRoute><AIAssistantPage /></ProtectedRoute>} />
         <Route path="/recommendations" element={<ProtectedRoute><RecommendationsPage /></ProtectedRoute>} />
         <Route path="/learning-plan" element={<ProtectedRoute><LearningPlanPage /></ProtectedRoute>} />
         <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+        <Route path="/profile" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/settings" element={<Navigate to="/dashboard" replace />} />
 
         {/* Fallback Route */}
         <Route path="*" element={<Navigate to="/" replace />} />

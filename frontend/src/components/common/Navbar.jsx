@@ -43,33 +43,42 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 bg-[#fbf7fd]/95 backdrop-blur-md border-b border-purple-200/80 shadow-xs font-sans text-stone-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo & Product Name - SkillSync */}
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-9.5 h-9.5 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-fuchsia-500 flex items-center justify-center text-white shadow-md shadow-purple-600/30 group-hover:scale-105 transition-transform border border-purple-400/40">
-            <Sparkles className="w-5 h-5 fill-white/20 text-white animate-pulse" />
+        <Link to="/" className="flex items-center gap-2.5 group cursor-pointer">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-fuchsia-500 flex items-center justify-center text-white shadow-md shadow-purple-600/30 group-hover:shadow-purple-600/50 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 border border-purple-400/40">
+            <Sparkles className="w-5 h-5 fill-white/20 text-white group-hover:rotate-12 transition-transform duration-300" />
           </div>
           <div>
-            <span className="font-extrabold text-lg text-stone-900 tracking-tight block leading-none">
+            <span className="font-extrabold text-lg text-stone-900 tracking-tight block leading-none group-hover:text-purple-700 transition-colors">
               Skill<span className="text-purple-600">Sync</span>
             </span>
-            <span className="text-[10px] text-purple-700/80 font-semibold">Sync Your Resume & Career</span>
+            <span className="text-[10px] text-purple-700/80 font-semibold group-hover:text-purple-900 transition-colors">Sync Your Resume & Career</span>
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <div className="hidden md:flex items-center gap-7 text-xs font-bold text-purple-700">
-          <button onClick={() => handleNavClick('features')} className="hover:text-purple-900 hover:bg-purple-50 px-2.5 py-1 rounded-lg transition-all">
+        {/* Desktop Navigation Links with Rich Hover States */}
+        <div className="hidden md:flex items-center gap-2 text-xs font-bold text-purple-800">
+          <button
+            onClick={() => handleNavClick('features')}
+            className="px-3.5 py-2 rounded-xl text-purple-700 hover:text-purple-950 hover:bg-purple-100/90 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 border border-transparent hover:border-purple-200/80 transition-all duration-200 cursor-pointer"
+          >
             Features
           </button>
-          <button onClick={() => handleNavClick('how-it-works')} className="hover:text-purple-900 hover:bg-purple-50 px-2.5 py-1 rounded-lg transition-all">
+          <button
+            onClick={() => handleNavClick('how-it-works')}
+            className="px-3.5 py-2 rounded-xl text-purple-700 hover:text-purple-950 hover:bg-purple-100/90 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 border border-transparent hover:border-purple-200/80 transition-all duration-200 cursor-pointer"
+          >
             How It Works
           </button>
           <button
             onClick={() => handleProtectedNavigation('/resume-services')}
-            className="hover:text-purple-900 hover:bg-purple-50 px-2.5 py-1 rounded-lg transition-all text-left"
+            className="px-3.5 py-2 rounded-xl text-purple-700 hover:text-purple-950 hover:bg-purple-100/90 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 border border-transparent hover:border-purple-200/80 transition-all duration-200 cursor-pointer"
           >
             Services
           </button>
-          <button onClick={() => handleNavClick('faq')} className="hover:text-purple-900 hover:bg-purple-50 px-2.5 py-1 rounded-lg transition-all">
+          <button
+            onClick={() => handleNavClick('faq')}
+            className="px-3.5 py-2 rounded-xl text-purple-700 hover:text-purple-950 hover:bg-purple-100/90 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 border border-transparent hover:border-purple-200/80 transition-all duration-200 cursor-pointer"
+          >
             FAQ
           </button>
         </div>
@@ -78,19 +87,19 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-100/70 border border-purple-200 text-purple-800 text-xs font-bold">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-100/70 border border-purple-200 text-purple-800 text-xs font-bold hover:bg-purple-100 transition-colors">
                 <UserCheck className="w-4 h-4 text-purple-600" />
                 <span>{userProfile?.fullName || 'User'}</span>
               </div>
               <button
                 onClick={() => navigate('/dashboard')}
-                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-purple-900 bg-purple-100 hover:bg-purple-200 rounded-xl transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-purple-900 bg-purple-100 hover:bg-purple-200 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 rounded-xl transition-all duration-200 cursor-pointer"
               >
                 <LayoutDashboard className="w-4 h-4" /> Workspace
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-stone-500 hover:text-rose-600 hover:bg-rose-50 hover:shadow-xs hover:-translate-y-0.5 rounded-xl transition-all duration-200 cursor-pointer"
                 title="Sign Out"
               >
                 <LogOut className="w-4 h-4" /> Sign Out
@@ -100,21 +109,21 @@ const Navbar = () => {
             <>
               <button
                 onClick={() => navigate('/login')}
-                className="px-4 py-2 text-xs font-bold text-purple-800 hover:text-purple-950 hover:bg-purple-100/70 rounded-xl transition-colors"
+                className="px-4 py-2 text-xs font-bold text-purple-800 hover:text-purple-950 hover:bg-purple-100/80 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 rounded-xl transition-all duration-200 cursor-pointer"
               >
                 Sign In
               </button>
               <button
                 onClick={() => navigate('/signup')}
-                className="px-3.5 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition-colors"
+                className="px-4 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 hover:text-purple-900 hover:border-purple-300 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 border border-purple-200 rounded-xl transition-all duration-200 cursor-pointer"
               >
                 Sign Up
               </button>
               <button
                 onClick={() => handleProtectedNavigation('/upload-resume')}
-                className="flex items-center gap-1.5 px-4.5 py-2.5 text-xs font-extrabold text-white bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700 hover:from-purple-700 hover:to-violet-800 rounded-xl shadow-md shadow-purple-600/30 transition-all hover:scale-[1.02]"
+                className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-extrabold text-white bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700 hover:from-purple-700 hover:to-violet-800 rounded-xl shadow-md shadow-purple-600/30 hover:shadow-lg hover:shadow-purple-600/40 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
               >
-                Analyze Resume <ArrowRight className="w-4 h-4" />
+                Analyze Resume <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </button>
             </>
           )}
@@ -123,7 +132,7 @@ const Navbar = () => {
         {/* Mobile menu trigger */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 text-purple-700 hover:text-purple-950 rounded-lg"
+          className="md:hidden p-2 text-purple-700 hover:text-purple-950 hover:bg-purple-100 rounded-lg transition-colors cursor-pointer"
         >
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>

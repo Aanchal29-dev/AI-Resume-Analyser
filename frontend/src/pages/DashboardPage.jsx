@@ -34,11 +34,11 @@ const DashboardPage = () => {
     <Sidebar>
       <div className="max-w-6xl mx-auto space-y-8 font-sans">
         {/* Sleek Hero Welcome Banner with Dynamic Greeting */}
-        <div className="bg-[#fbf7fd] rounded-3xl p-6 sm:p-8 border-2 border-purple-200/80 hover:border-purple-400 text-stone-900 shadow-soft relative overflow-hidden transition-all">
+        <div className="glass-panel rounded-3xl p-6 sm:p-8 border border-purple-200/90 hover:border-purple-400 text-stone-900 shadow-soft relative overflow-hidden transition-all duration-300">
           <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 border border-purple-300 text-purple-800 text-xs font-semibold">
-                <Sparkles className="w-3.5 h-3.5 text-purple-600" /> Personal Workspace
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100/90 border border-purple-300 text-purple-800 text-xs font-semibold shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600 animate-pulse" /> Personal Workspace
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
                 {greetingText}
@@ -54,7 +54,7 @@ const DashboardPage = () => {
 
             <button
               onClick={() => navigate('/upload-resume')}
-              className="px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white font-bold text-xs shadow-md shadow-purple-600/20 transition-all flex items-center gap-2 shrink-0 hover:scale-[1.02]"
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white font-bold text-xs shadow-md shadow-purple-600/25 hover:shadow-lg hover:shadow-purple-600/40 transition-all flex items-center gap-2 shrink-0 hover:scale-105 active:scale-95 cursor-pointer"
             >
               <Upload className="w-4 h-4" /> {hasAnalyzedResume ? 'Analyze New Resume' : 'Upload Resume'}
             </button>
@@ -103,12 +103,12 @@ const DashboardPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div
               onClick={() => navigate('/upload-resume')}
-              className="bg-[#fbf7fd] hover:bg-purple-50/60 p-6 rounded-2xl border-2 border-purple-200/80 hover:border-purple-500 shadow-soft shadow-card-hover cursor-pointer group transition-all"
+              className="glass-panel hover:bg-white/95 p-6 rounded-2xl border border-purple-200/90 hover:border-purple-400 shadow-soft hover:shadow-xl hover:shadow-purple-500/12 hover:-translate-y-1 cursor-pointer group transition-all duration-300"
             >
-              <div className="w-11 h-11 rounded-xl bg-purple-100/90 text-purple-700 flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+              <div className="w-11 h-11 rounded-xl bg-purple-100/90 text-purple-700 flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-xs">
                 <FileCheck2 className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-extrabold text-stone-900">Resume Analyzer</h3>
+              <h3 className="text-base font-extrabold text-stone-900 group-hover:text-purple-700 transition-colors">Resume Analyzer</h3>
               <p className="text-xs text-stone-600 mt-1 leading-relaxed">
                 Evaluate ATS compatibility, formatting, and section completeness.
               </p>
@@ -119,12 +119,12 @@ const DashboardPage = () => {
 
             <div
               onClick={() => navigate('/job-matcher')}
-              className="bg-[#fbf7fd] hover:bg-purple-50/60 p-6 rounded-2xl border-2 border-purple-200/80 hover:border-purple-500 shadow-soft shadow-card-hover cursor-pointer group transition-all"
+              className="glass-panel hover:bg-white/95 p-6 rounded-2xl border border-purple-200/90 hover:border-purple-400 shadow-soft hover:shadow-xl hover:shadow-purple-500/12 hover:-translate-y-1 cursor-pointer group transition-all duration-300"
             >
-              <div className="w-11 h-11 rounded-xl bg-purple-100/90 text-purple-700 flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+              <div className="w-11 h-11 rounded-xl bg-purple-100/90 text-purple-700 flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-xs">
                 <Target className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-extrabold text-stone-900">Job Matcher</h3>
+              <h3 className="text-base font-extrabold text-stone-900 group-hover:text-purple-700 transition-colors">Job Matcher</h3>
               <p className="text-xs text-stone-600 mt-1 leading-relaxed">
                 Compare resume against job descriptions to extract missing skills.
               </p>
@@ -135,12 +135,12 @@ const DashboardPage = () => {
 
             <div
               onClick={() => navigate('/career-discovery')}
-              className="bg-[#fbf7fd] hover:bg-purple-50/60 p-6 rounded-2xl border-2 border-purple-200/80 hover:border-purple-500 shadow-soft shadow-card-hover cursor-pointer group transition-all"
+              className="glass-panel hover:bg-white/95 p-6 rounded-2xl border border-purple-200/90 hover:border-purple-400 shadow-soft hover:shadow-xl hover:shadow-purple-500/12 hover:-translate-y-1 cursor-pointer group transition-all duration-300"
             >
-              <div className="w-11 h-11 rounded-xl bg-purple-100/90 text-purple-700 flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+              <div className="w-11 h-11 rounded-xl bg-purple-100/90 text-purple-700 flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-xs">
                 <Compass className="w-5 h-5" />
               </div>
-              <h3 className="text-base font-extrabold text-stone-900">Career Discovery</h3>
+              <h3 className="text-base font-extrabold text-stone-900 group-hover:text-purple-700 transition-colors">Career Discovery</h3>
               <p className="text-xs text-stone-600 mt-1 leading-relaxed">
                 Guided questionnaire matching your interests with tech career roles.
               </p>
@@ -153,7 +153,7 @@ const DashboardPage = () => {
 
         {/* Priority Fixes (Shown when resume is analyzed) */}
         {hasAnalyzedResume && (
-          <div className="bg-[#fbf7fd] rounded-2xl border-2 border-purple-200/80 hover:border-purple-400 p-6 shadow-soft space-y-4 transition-all">
+          <div className="glass-panel rounded-2xl border border-purple-200/90 hover:border-purple-300 p-6 shadow-soft space-y-4 transition-all duration-300">
             <div className="flex items-center justify-between border-b border-purple-100 pb-3">
               <div>
                 <h3 className="font-extrabold text-stone-900 text-sm">Top Priority Resume Fixes</h3>

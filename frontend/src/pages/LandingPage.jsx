@@ -201,11 +201,6 @@ const LandingPage = () => {
 
         {/* Center Hero Content */}
         <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8 relative z-10 my-auto">
-          {/* Tag Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-200/70 border border-purple-300/80 text-purple-900 text-xs font-bold shadow-xs">
-            <Sparkles className="w-4 h-4 text-purple-700" /> Next-Gen AI Career & Resume Intelligence Platform
-          </div>
-
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-stone-950 tracking-tight leading-[1.12]">
             Understand Your Resume. <br />
             <span className="gradient-text">Discover Your Next Career Move.</span>

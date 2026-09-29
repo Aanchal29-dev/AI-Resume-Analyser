@@ -7,7 +7,6 @@ import {
   Target,
   Compass,
   Bot,
-  Settings,
   Menu,
   X,
   ChevronLeft,
@@ -29,8 +28,7 @@ const Sidebar = ({ children }) => {
     { name: 'Resume Analyzer', path: '/upload-resume', icon: FileCheck2 },
     { name: 'Job Matcher', path: '/job-matcher', icon: Target },
     { name: 'Career Path', path: '/career-discovery', icon: Compass },
-    { name: 'AI Assistant', path: '/ai-assistant', icon: Bot, badge: 'AI' },
-    { name: 'Settings & Profile', path: '/settings', icon: Settings }
+    { name: 'AI Assistant', path: '/ai-assistant', icon: Bot, badge: 'AI' }
   ];
 
   const handleSignOut = () => {
@@ -39,9 +37,23 @@ const Sidebar = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col md:flex-row font-sans">
+    <div className="min-h-screen bg-[#f7f2fb] text-stone-900 flex flex-col md:flex-row font-sans selection:bg-purple-600 selection:text-white relative overflow-x-hidden">
+      {/* Dynamic Animated Ambient Background Texture & Glowing Orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-28 -left-28 w-[32rem] h-[32rem] bg-purple-400/20 rounded-full blur-3xl animate-float-slow" />
+        <div className="absolute top-1/4 -right-20 w-[28rem] h-[28rem] bg-fuchsia-400/18 rounded-full blur-3xl animate-float-reverse" />
+        <div className="absolute bottom-10 left-1/3 w-[30rem] h-[30rem] bg-violet-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
+        {/* Fine Micro-Dot Mesh Matrix Texture */}
+        <div
+          className="absolute inset-0 opacity-60"
+          style={{
+            backgroundImage: 'radial-gradient(rgba(124, 58, 237, 0.09) 1.5px, transparent 1.5px)',
+            backgroundSize: '24px 24px'
+          }}
+        />
+      </div>
       {/* Mobile Header Bar */}
-      <div className="md:hidden bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      <div className="md:hidden bg-[#fbf7fd] border-b border-purple-200/80 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-violet-600 flex items-center justify-center text-white border border-purple-400/40">
             <Sparkles className="w-4 h-4 text-white" />
@@ -50,7 +62,7 @@ const Sidebar = ({ children }) => {
         </Link>
         <button
           onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
-          className="p-2 rounded-lg text-stone-600 hover:bg-purple-50"
+          className="p-2 rounded-lg text-purple-700 hover:bg-purple-100/70"
         >
           {mobileDrawerOpen ? <X className="w-6 h-6 text-purple-700" /> : <Menu className="w-6 h-6 text-purple-700" />}
         </button>
@@ -58,7 +70,7 @@ const Sidebar = ({ children }) => {
 
       {/* Desktop Sidebar / Mobile Drawer */}
       <aside
-        className={`fixed md:sticky top-0 z-40 h-screen bg-white border-r border-stone-200/80 flex flex-col justify-between transition-all duration-300 ${
+        className={`fixed md:sticky top-0 z-40 h-screen bg-[#fbf7fd] border-r border-purple-200/80 flex flex-col justify-between transition-all duration-300 shadow-xs ${
           collapsed ? 'w-20' : 'w-64'
         } ${
           mobileDrawerOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
@@ -66,7 +78,7 @@ const Sidebar = ({ children }) => {
       >
         {/* Top Brand Header - SkillSync AI */}
         <div>
-          <div className="h-16 px-5 flex items-center justify-between border-b border-stone-100">
+          <div className="h-16 px-5 flex items-center justify-between border-b border-purple-100">
             <Link to="/" className="flex items-center gap-3 overflow-hidden group">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-violet-600 to-fuchsia-500 flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform border border-purple-400/30">
                 <Sparkles className="w-5 h-5" />
@@ -120,26 +132,23 @@ const Sidebar = ({ children }) => {
         </div>
 
         {/* Bottom User Profile & Sign Out Widget */}
-        <div className="p-3 border-t border-slate-100 space-y-1">
-          <Link
-            to="/profile"
-            className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-100 transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0 border border-indigo-200">
+        <div className="p-3 border-t border-purple-100 space-y-1">
+          <div className="flex items-center gap-3 p-2 rounded-xl bg-purple-50/70 border border-purple-200/60">
+            <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs shrink-0 border border-purple-300 shadow-xs">
               {userProfile.fullName ? userProfile.fullName.slice(0, 2).toUpperCase() : 'US'}
             </div>
             {!collapsed && (
               <div className="overflow-hidden text-left flex-1">
-                <div className="text-xs font-bold text-slate-800 truncate">{userProfile.fullName || 'User'}</div>
-                <div className="text-[10px] text-slate-400 truncate">{userProfile.email || 'user@example.com'}</div>
+                <div className="text-xs font-bold text-stone-900 truncate">{userProfile.fullName || 'User'}</div>
+                <div className="text-[10px] text-purple-700/80 truncate">{userProfile.email || 'user@example.com'}</div>
               </div>
             )}
-          </Link>
+          </div>
 
           {!collapsed && (
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" /> Sign Out
             </button>
@@ -147,8 +156,8 @@ const Sidebar = ({ children }) => {
         </div>
       </aside>
 
-      {/* Main Workspace Content */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0 overflow-y-auto">
+      {/* Main Workspace Content with Dynamic Ambient Layering */}
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0 overflow-y-auto relative z-10">
         {children}
       </main>
     </div>

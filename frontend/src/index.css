@@ -39,6 +39,13 @@
   border: 1px solid rgba(233, 229, 243, 0.9);
 }
 
+.glass-panel {
+  background: rgba(253, 250, 255, 0.82);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(224, 215, 240, 0.85);
+  box-shadow: 0 8px 32px 0 rgba(124, 58, 237, 0.06);
+}
+
 .gradient-text {
   background: linear-gradient(135deg, #6d28d9 0%, #9333ea 50%, #c026d3 100%);
   -webkit-background-clip: text;
@@ -60,6 +67,32 @@
 .shadow-card-hover:hover {
   transform: translateY(-4px) scale(1.015);
   box-shadow: 0 20px 35px -8px rgba(124, 58, 237, 0.18), 0 8px 16px -4px rgba(28, 25, 23, 0.04);
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.05);
+  }
+}
+
+@keyframes float-reverse {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(18px) scale(0.97);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 9s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 11s ease-in-out infinite;
 }
 
 /* Custom Scrollbars */
