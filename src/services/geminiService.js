@@ -3,6 +3,16 @@
 // Default API Key lookup with fallback to provided key
 const DEFAULT_KEY = 'AQ.Ab8RN6IqZvFE0w9m-3okouKXvbsn1agvsG9vIYX-cSNLpac3Jw';
 
+// Ordered list of models to try for high availability and low latency
+const CANDIDATE_MODELS = [
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-flash-latest',
+  'gemini-flash-lite-latest'
+];
+
 export const getGeminiApiKey = () => {
   try {
     const stored = localStorage.getItem('skillsync_gemini_api_key');
@@ -24,7 +34,7 @@ export const setGeminiApiKey = (key) => {
 };
 
 /**
- * Helper to call Gemini API endpoints
+ * Robust helper to call Gemini API with multi-model auto-failover
  */
 const callGeminiEndpoint = async (contents, systemInstruction = '', responseJson = false) => {
   const apiKey = getGeminiApiKey();
@@ -32,39 +42,48 @@ const callGeminiEndpoint = async (contents, systemInstruction = '', responseJson
     throw new Error('Gemini API Key is missing. Please configure it in Settings.');
   }
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  let lastError = null;
 
-  const requestBody = {
-    contents,
-    generationConfig: {
-      temperature: 0.2,
-      ...(responseJson ? { response_mime_type: 'application/json' } : {})
+  for (const modelName of CANDIDATE_MODELS) {
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+      const requestBody = {
+        contents,
+        generationConfig: {
+          temperature: 0.3,
+          ...(responseJson ? { response_mime_type: 'application/json' } : {})
+        }
+      };
+
+      if (systemInstruction) {
+        requestBody.system_instruction = {
+          parts: [{ text: systemInstruction }]
+        };
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          return text;
+        }
+      } else {
+        const errText = await response.text();
+        lastError = new Error(`Model ${modelName} returned ${response.status}: ${errText}`);
+      }
+    } catch (err) {
+      lastError = err;
     }
-  };
-
-  if (systemInstruction) {
-    requestBody.system_instruction = {
-      parts: [{ text: systemInstruction }]
-    };
   }
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody)
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Gemini API returned error ${response.status}: ${errText}`);
-  }
-
-  const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error('Empty response received from Gemini model.');
-  }
-  return text;
+  throw lastError || new Error('All Gemini models are currently busy. Please try again shortly.');
 };
 
 /**
@@ -203,22 +222,30 @@ You MUST respond strictly in valid JSON format matching this schema:
 };
 
 /**
- * 2. Generates Interactive AI Chat Responses using Gemini
+ * 2. Generates Interactive AI Chat Responses using Gemini (Direct, comprehensive answers in chat)
  */
 export const generateAIChatResponse = async (userMessage, chatHistory = [], resumeContext = null, targetRole = null) => {
-  const systemInstruction = `You are "SkillSync AI Coach", an expert technical recruiter, career coach, and ATS specialist.
-You help candidates analyze their resume, optimize bullet points with the Google X-Y-Z formula ("Accomplished [X] as measured by [Y], by doing [Z]"), identify critical skill gaps, and prepare for interviews.
+  const systemInstruction = `You are "SkillSync AI Coach" powered by Google Gemini. You are a world-class technical recruiter, resume writer, and career mentor.
 
-User's Resume Data:
-- Candidate Name: ${resumeContext?.contact?.fullName || 'Candidate'}
+CRITICAL RULES:
+1. NEVER redirect the user to other pages or tell them "go check the fix first section" or "visit other tabs". Always provide the FULL, complete, actionable answer directly inside this chat!
+2. If the user asks for bullet point improvements, write out 2 to 3 complete, polished, metric-driven bullet points using the Google X-Y-Z formula directly in the chat.
+3. If the user asks for a summary, write the complete professional summary directly in the chat so they can read or copy it immediately.
+4. If the user asks technical questions (e.g. React, TypeScript, System Design, SQL, algorithms, ATS algorithms), give clear, thorough, friendly explanations with examples.
+5. If the user asks about interview questions, give sample questions AND winning answers.
+6. Format your responses with beautiful Markdown: use bolding, bullet points, code snippets, and structured headings where appropriate.
+7. Tone: Insightful, empathetic, professional, and directly useful.
+
+Candidate Context:
+- Name: ${resumeContext?.contact?.fullName || 'Candidate'}
 - Target Role: ${targetRole?.title || 'Software Engineering'}
-- Skills: ${Array.isArray(resumeContext?.skills?.technical) ? resumeContext.skills.technical.join(', ') : 'JavaScript, React, Git'}
-- Summary: ${resumeContext?.summary || 'Not provided'}
-- Experience Count: ${resumeContext?.experience?.length || 0} roles
+- Target Role Category: ${targetRole?.category || 'Technology'}
+- Technical Skills: ${Array.isArray(resumeContext?.skills?.technical) ? resumeContext.skills.technical.join(', ') : 'JavaScript, React, Git, SQL'}
+- Work Experience Count: ${resumeContext?.experience?.length || 0} positions
+- Education: ${resumeContext?.education?.[0]?.degree || 'Computer Science / Engineering'}
+- Certifications: ${resumeContext?.certifications?.map(c => c.name).join(', ') || 'Professional Course Credentials'}`;
 
-Keep your answers concise, practical, highly encouraging, and formatted in clean Markdown with bullet points.`;
-
-  const formattedContents = chatHistory.slice(-6).map(msg => ({
+  const formattedContents = chatHistory.slice(-8).map(msg => ({
     role: msg.sender === 'user' ? 'user' : 'model',
     parts: [{ text: msg.text }]
   }));
@@ -287,7 +314,7 @@ export const fetchDailyGeminiFAQs = async (forceRefresh = false) => {
     } catch (e) {}
   }
 
-  const systemInstruction = `You are Google Gemini Career Intelligence. Generate 5 of the most trending and frequently asked questions and high-impact answers regarding resume writing, ATS scanner optimization, career switching, internship credentials, and modern hiring practices for today (${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}).
+  const systemInstruction = `You are Google Gemini Career Intelligence. Generate 6 of the most trending and frequently asked questions and high-impact answers regarding resume writing, ATS scanner optimization, career switching, internship credentials, and modern hiring practices for today (${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}).
 Respond strictly in JSON format matching this schema:
 {
   "lastUpdated": "${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}",
@@ -303,7 +330,7 @@ Respond strictly in JSON format matching this schema:
 }`;
 
   const contents = [{
-    parts: [{ text: `Generate the top 5 most frequently asked resume and job questions on Gemini for ${todayStr}.` }]
+    parts: [{ text: `Generate the top 6 most frequently asked resume and job questions on Gemini for ${todayStr}.` }]
   }];
 
   try {
@@ -352,6 +379,12 @@ Respond strictly in JSON format matching this schema:
         a: "The AI Correction Suite examines weak or passive phrases and rewrites them into metric-driven accomplishment statements tailored specifically for your target role.",
         category: "Formatting",
         trendingScore: "Hot Topic"
+      },
+      {
+        q: "How do I optimize my resume for automated HR screening filters?",
+        a: "Ensure single-column layout, standard section headers, clean typography, and include relevant technical skills matched to the job description.",
+        category: "ATS Tips",
+        trendingScore: "High Demand"
       }
     ]
   };
