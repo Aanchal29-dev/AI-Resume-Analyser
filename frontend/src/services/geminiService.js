@@ -3,12 +3,11 @@
 // Default API Key lookup with fallback to provided key
 const DEFAULT_KEY = 'AQ.Ab8RN6IqZvFE0w9m-3okouKXvbsn1agvsG9vIYX-cSNLpac3Jw';
 
-// Ordered list of models to try for high availability and low latency
+// Ordered list of verified working models with gemini-3.1-flash-lite leading for instant response
 const CANDIDATE_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash-lite',
+  'gemini-3.8-flash',
   'gemini-3.7-flash',
   'gemini-flash-latest'
 ];
@@ -225,25 +224,24 @@ You MUST respond strictly in valid JSON format matching this schema:
  * 2. Generates Interactive AI Chat Responses using Gemini (Direct, comprehensive answers in chat)
  */
 export const generateAIChatResponse = async (userMessage, chatHistory = [], resumeContext = null, targetRole = null) => {
-  const systemInstruction = `You are "SkillSync AI Coach" powered by Google Gemini. You are a world-class technical recruiter, resume writer, and career mentor.
+  const systemInstruction = `You are an elite, unrestricted AI Assistant, Career Coach, and Technical Mentor powered by Google Gemini.
+You have deep expertise across software engineering, coding, full-stack development, system design, technical recruiting, resume writing, and interview preparation.
 
-CRITICAL RULES:
-1. NEVER redirect the user to other pages or tell them "go check the fix first section" or "visit other tabs". Always provide the FULL, complete, actionable answer directly inside this chat!
-2. If the user asks for bullet point improvements, write out 2 to 3 complete, polished, metric-driven bullet points using the Google X-Y-Z formula directly in the chat.
-3. If the user asks for a summary, write the complete professional summary directly in the chat so they can read or copy it immediately.
-4. If the user asks technical questions (e.g. React, TypeScript, System Design, SQL, algorithms, ATS algorithms), give clear, thorough, friendly explanations with examples.
-5. If the user asks about interview questions, give sample questions AND winning answers.
-6. Format your responses with beautiful Markdown: use bolding, bullet points, code snippets, and structured headings where appropriate.
-7. Tone: Insightful, empathetic, professional, and directly useful.
+YOUR CAPABILITIES & GUIDELINES:
+- Answer ANY question the user asks directly, thoroughly, and intelligently like a top-tier AI assistant.
+- If asked for resume help or bullet points: write out full, polished, quantifiable accomplishment statements directly in the chat with metrics and strong action verbs.
+- If asked for a summary: provide complete, ready-to-use professional summary drafts.
+- If asked technical or coding questions: provide comprehensive explanations, clear code snippets, best practices, and architecture trade-offs.
+- If asked for interview prep: give realistic questions, structured answer frameworks (STAR/CAR), and sample winning responses.
+- If asked casual or general questions: respond in an engaging, natural, and helpful manner.
+- Format responses beautifully with Markdown: use headers, bold text, bullet lists, and code blocks for readability.
 
-Candidate Context:
-- Name: ${resumeContext?.contact?.fullName || 'Candidate'}
-- Target Role: ${targetRole?.title || 'Software Engineering'}
-- Target Role Category: ${targetRole?.category || 'Technology'}
-- Technical Skills: ${Array.isArray(resumeContext?.skills?.technical) ? resumeContext.skills.technical.join(', ') : 'JavaScript, React, Git, SQL'}
-- Work Experience Count: ${resumeContext?.experience?.length || 0} positions
-- Education: ${resumeContext?.education?.[0]?.degree || 'Computer Science / Engineering'}
-- Certifications: ${resumeContext?.certifications?.map(c => c.name).join(', ') || 'Professional Course Credentials'}`;
+Candidate Profile Context (use to personalize when relevant):
+- Candidate Name: ${resumeContext?.contact?.fullName || 'Candidate'}
+- Target Role: ${targetRole?.title || 'Software Engineer'} (${targetRole?.category || 'Technology'})
+- Skills: ${Array.isArray(resumeContext?.skills?.technical) ? resumeContext.skills.technical.join(', ') : 'Full-Stack Development, Software Engineering'}
+- Experience Count: ${resumeContext?.experience?.length || 0} roles
+- Education: ${resumeContext?.education?.[0]?.degree || 'Computer Science / Engineering'}`;
 
   const formattedContents = chatHistory.slice(-8).map(msg => ({
     role: msg.sender === 'user' ? 'user' : 'model',

@@ -114,12 +114,26 @@ export const auditCertificateOriginality = (text, fileName = '') => {
 export const validateResumeContent = async (input, fileName = '', fileType = '') => {
   const apiKey = getGeminiApiKey();
 
+  let effectiveMime = fileType;
+  if (!effectiveMime && typeof input === 'string' && input.startsWith('data:')) {
+    const semiIdx = input.indexOf(';');
+    if (semiIdx > 5) {
+      effectiveMime = input.substring(5, semiIdx);
+    }
+  }
+  if (!effectiveMime) {
+    if (fileName.endsWith('.pdf')) effectiveMime = 'application/pdf';
+    else if (fileName.endsWith('.png')) effectiveMime = 'image/png';
+    else if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) effectiveMime = 'image/jpeg';
+    else effectiveMime = 'text/plain';
+  }
+
   // 1. If Gemini API Key is available, use real AI evaluation
   if (apiKey) {
     try {
       if (typeof input === 'string' && (input.startsWith('data:') || input.length > 5000)) {
         // Base64 or long payload
-        const res = await validateAndAnalyzeWithGemini(input, fileType || 'text/plain');
+        const res = await validateAndAnalyzeWithGemini(input, effectiveMime);
         if (!res.isValidResume) {
           return {
             isValid: false,

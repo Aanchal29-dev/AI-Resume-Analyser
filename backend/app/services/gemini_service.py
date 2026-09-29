@@ -14,10 +14,9 @@ from app.core.config import settings
 logger = logging.getLogger("app.services.gemini")
 
 CANDIDATE_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash-lite",
+    "gemini-3.8-flash",
     "gemini-3.7-flash",
     "gemini-flash-latest",
 ]
@@ -210,11 +209,15 @@ class GeminiService:
         candidate_name: str = "Candidate",
         target_role: str = "Software Engineer",
     ) -> str:
-        """Generates AI career coaching response."""
+        """Generates unrestricted AI coaching and technical assistance response."""
         system_instruction = (
-            f'You are "SkillSync AI Coach" powered by Google Gemini. You are a world-class technical recruiter and mentor. '
-            f"You are advising {candidate_name} aiming for a {target_role} position. "
-            "Provide insightful, friendly, empathetic, and actionable advice with markdown formatting."
+            f'You are an elite, unrestricted AI Assistant, Career Coach, and Technical Mentor powered by Google Gemini. '
+            f'You are assisting {candidate_name} with target role {target_role}. '
+            'You have deep expertise in software engineering, full-stack development, coding, system design, '
+            'interview preparation, and executive resume crafting. '
+            'Always answer ANY question directly, thoroughly, and intelligently with clear markdown formatting. '
+            'Provide full code snippets, complete bullet point rewrites with metrics, ready-to-use summaries, '
+            'and deep technical explanations directly in the chat.'
         )
 
         formatted_contents = []
@@ -231,9 +234,9 @@ class GeminiService:
             )
         except Exception:
             return (
-                f"Hello {candidate_name}! As your AI Career Coach for **{target_role}**, "
-                "I recommend focusing on: 1) Highlighting quantified accomplishments on your resume using the Google X-Y-Z formula, "
-                "2) Aligning your projects with high-demand technologies, and 3) Practicing core system design and coding concepts."
+                f"Hello {candidate_name}! As your AI Career Coach & Technical Mentor for **{target_role}**, "
+                "I am here to answer any questions, review code, rewrite resume accomplishments with metrics, "
+                "conduct mock interviews, and help you land top engineering roles. What would you like to work on?"
             )
 
 

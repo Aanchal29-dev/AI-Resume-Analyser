@@ -14,7 +14,6 @@ import {
   Clipboard,
   AlertTriangle,
   XCircle,
-  KeyRound,
   ShieldCheck,
   Award,
   Check,
@@ -29,8 +28,6 @@ const UploadResumePage = () => {
     uploadedFileSize,
     handleUploadResume,
     handleClearResume,
-    geminiApiKey,
-    updateGeminiApiKey,
     verifiedCertificate
   } = useApp();
 
@@ -42,8 +39,6 @@ const UploadResumePage = () => {
   // Validation Error State
   const [errorMessage, setErrorMessage] = useState('');
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState(geminiApiKey || '');
 
   const handleFileDrop = (e) => {
     e.preventDefault();
@@ -72,6 +67,8 @@ const UploadResumePage = () => {
         setErrorMessage(err);
         setShowErrorModal(true);
         handleClearResume();
+      } else {
+        navigate('/resume-overview');
       }
     } catch (err) {
       setIsProcessing(false);
@@ -106,15 +103,10 @@ const UploadResumePage = () => {
     }
   };
 
-  const handleSaveApiKey = () => {
-    updateGeminiApiKey(apiKeyInput.trim());
-    setShowApiKeyModal(false);
-  };
-
   return (
     <Sidebar>
       <div className="max-w-4xl mx-auto space-y-8 font-sans">
-        {/* Top Header & API Engine Badge */}
+        {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold mb-2">
@@ -124,23 +116,6 @@ const UploadResumePage = () => {
             <p className="text-sm text-slate-500 mt-1">
               Upload your resume, CV, course completion certificate, or internship credential. Non-career files are strictly blocked.
             </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                setApiKeyInput(geminiApiKey || '');
-                setShowApiKeyModal(true);
-              }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
-                geminiApiKey
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-              <span>{geminiApiKey ? 'Gemini AI Active' : 'Configure Gemini API Key'}</span>
-            </button>
           </div>
         </div>
 
@@ -371,50 +346,6 @@ const UploadResumePage = () => {
                 className="px-6 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition-all"
               >
                 Got It, Upload Real Document
-              </button>
-            </div>
-          </div>
-        </Modal>
-
-        {/* Gemini API Key Configuration Modal */}
-        <Modal
-          isOpen={showApiKeyModal}
-          onClose={() => setShowApiKeyModal(false)}
-          title="Gemini API Key Integration"
-        >
-          <div className="space-y-4">
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Enter your Google Gemini API key to enable direct, deep AI document extraction, OCR parsing for certificates/resumes, and live originality auditing.
-            </p>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Google Gemini API Key</label>
-              <input
-                type="password"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="AIzaSy..."
-                className="w-full p-3 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-indigo-600"
-              />
-              <span className="text-[10px] text-slate-400 mt-1 block">Key is saved securely in your browser's local storage.</span>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              {geminiApiKey && (
-                <button
-                  onClick={() => {
-                    updateGeminiApiKey('');
-                    setApiKeyInput('');
-                    setShowApiKeyModal(false);
-                  }}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50"
-                >
-                  Clear Key
-                </button>
-              )}
-              <button
-                onClick={handleSaveApiKey}
-                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md"
-              >
-                Save API Key
               </button>
             </div>
           </div>
