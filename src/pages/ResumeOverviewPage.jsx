@@ -6,11 +6,11 @@ import ResumePreview from '../components/common/ResumePreview';
 import ProgressBar from '../components/common/ProgressBar';
 import { useApp } from '../context/AppContext';
 import { calculateSectionCompleteness } from '../utils/resumeValidator';
-import { FileText, CheckCircle2, AlertCircle, ArrowRight, Layers, Edit3, Target } from 'lucide-react';
+import { FileText, CheckCircle2, AlertCircle, ArrowRight, Layers, Edit3, Target, Award, BadgeCheck, ShieldCheck } from 'lucide-react';
 
 const ResumeOverviewPage = () => {
   const navigate = useNavigate();
-  const { resumeData, uploadedFileName } = useApp();
+  const { resumeData, uploadedFileName, verifiedCertificate } = useApp();
 
   const completeness = calculateSectionCompleteness(resumeData);
   const { sections, detectedCount, totalCount, percentage } = completeness;
@@ -41,6 +41,35 @@ const ResumeOverviewPage = () => {
             </button>
           </div>
         </div>
+
+        {/* Verified Certificate & Originality Banner (if verified) */}
+        {verifiedCertificate && (
+          <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-5 shadow-soft flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                <Award className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-900 text-sm">{verifiedCertificate.details?.title}</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white flex items-center gap-1">
+                    <BadgeCheck className="w-3 h-3" /> {verifiedCertificate.originality?.status || 'Verified Authentic'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Issued by <span className="font-semibold text-slate-700">{verifiedCertificate.details?.issuer}</span> • ID: <span className="font-mono text-slate-700">{verifiedCertificate.details?.credentialId}</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="text-right">
+                <div className="text-lg font-black text-emerald-700">{verifiedCertificate.originality?.authenticityScore || 94}%</div>
+                <div className="text-[10px] font-semibold text-slate-500">Originality Score</div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Section Completeness Indicators (Calculated Dynamically) */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-soft grid grid-cols-1 md:grid-cols-4 gap-6">

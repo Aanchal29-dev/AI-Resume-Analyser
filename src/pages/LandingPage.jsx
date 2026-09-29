@@ -1,11 +1,12 @@
 // src/pages/LandingPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 import ServiceDetailModal from '../components/common/ServiceDetailModal';
 import StepDetailModal from '../components/common/StepDetailModal';
 import { useApp } from '../context/AppContext';
+import { fetchDailyGeminiFAQs } from '../services/geminiService';
 import {
   Sparkles,
   FileCheck2,
@@ -15,7 +16,11 @@ import {
   Upload,
   Cpu,
   Edit3,
-  TrendingUp
+  TrendingUp,
+  RefreshCw,
+  HelpCircle,
+  Flame,
+  Calendar
 } from 'lucide-react';
 import { PLATFORM_SERVICES } from '../data/mockData';
 
@@ -45,24 +50,72 @@ const LandingPage = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [selectedStepNumber, setSelectedStepNumber] = useState(null);
 
-  const faqs = [
-    {
-      q: "How does SkillSync analyze resumes?",
-      a: "Our platform parses your uploaded file (PDF, DOCX, DOC, TXT, PNG, JPG), extracts key sections (Education, Experience, Skills), and runs intelligent ATS formatting algorithms alongside semantic skill matching against target job descriptions."
-    },
-    {
-      q: "What if I don't have a resume yet?",
-      a: "No problem! Choose 'Discover My Career Path' to complete our guided questionnaire. Based on your interests and chosen field, we'll recommend top technical roles and help you build a high-impact resume from scratch."
-    },
-    {
-      q: "Can I tailor my resume for a specific job description?",
-      a: "Yes! Use our Job Matcher feature to compare your resume directly against any target job posting. You will receive a percentage match score, identified skill gaps, and AI bullet rewrites."
-    },
-    {
-      q: "Is this platform suitable for students and fresh graduates?",
-      a: "Absolutely! SkillSync is designed specifically for students, entry-level candidates, and career switchers needing clear guidance on presenting coursework, projects, and skills."
+  // Dynamic Gemini Daily FAQs State
+  const [dailyFaqPayload, setDailyFaqPayload] = useState({
+    lastUpdated: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    trendingTheme: 'AI Screening & ATS Optimization',
+    faqs: [
+      {
+        q: "How does SkillSync's Gemini AI analyze resumes differently from standard keyword checkers?",
+        a: "Unlike traditional keyword-counting tools, SkillSync uses Google Gemini to semantically evaluate context, quantified impact (Google X-Y-Z formula), section completeness, and genuine alignment against target job descriptions.",
+        category: "ATS Optimization",
+        trendingScore: "Top Question"
+      },
+      {
+        q: "Can I upload course completion or internship certificates for verification?",
+        a: "Yes! SkillSync automatically recognizes certificates from Coursera, Udemy, Meta, Google, universities, and internship employers, performing an originality and authenticity audit before adding them to your profile.",
+        category: "Certifications",
+        trendingScore: "Trending"
+      },
+      {
+        q: "How often are the resume suggestions and industry trends updated?",
+        a: "The AI analysis model and FAQ trends are updated daily via Google Gemini to reflect current tech industry hiring demands and algorithm changes.",
+        category: "Industry Trends",
+        trendingScore: "Daily Update"
+      },
+      {
+        q: "What should I do if I am a fresher with no previous work experience?",
+        a: "Use our 'Discover My Career Path' questionnaire. Gemini AI maps your academic coursework, projects, and strengths to high-demand roles, generating tailored resume bullets from scratch.",
+        category: "Career Strategy",
+        trendingScore: "Student Favorite"
+      },
+      {
+        q: "How does the side-by-side AI bullet point rewrite work?",
+        a: "The AI Correction Suite examines weak or passive phrases and rewrites them into metric-driven accomplishment statements tailored specifically for your target role.",
+        category: "Formatting",
+        trendingScore: "Hot Topic"
+      }
+    ]
+  });
+  const [isRefreshingFaqs, setIsRefreshingFaqs] = useState(false);
+
+  useEffect(() => {
+    const loadFaqs = async () => {
+      try {
+        const data = await fetchDailyGeminiFAQs(false);
+        if (data && data.faqs) {
+          setDailyFaqPayload(data);
+        }
+      } catch (err) {
+        console.warn('Initial FAQ fetch fallback:', err);
+      }
+    };
+    loadFaqs();
+  }, []);
+
+  const handleManualFaqRefresh = async () => {
+    setIsRefreshingFaqs(true);
+    try {
+      const fresh = await fetchDailyGeminiFAQs(true);
+      if (fresh && fresh.faqs) {
+        setDailyFaqPayload(fresh);
+      }
+    } catch (e) {
+      console.warn('Error refreshing FAQs:', e);
+    } finally {
+      setIsRefreshingFaqs(false);
     }
-  ];
+  };
 
   const handleProtectedAction = (path) => {
     if (!isAuthenticated) {
@@ -85,7 +138,6 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-10 pb-16 md:pt-16 md:pb-24 border-b border-purple-200/70 bg-gradient-to-b from-purple-200/35 via-purple-100/25 to-[#f3e8fa]">
-        {/* Background Ambient Glowing Orbs - lightened for soft, elegant radiance */}
         <div className="pointer-events-none absolute -top-24 -left-20 w-96 h-96 bg-purple-400/12 rounded-full blur-3xl"></div>
         <div className="pointer-events-none absolute top-1/4 -right-20 w-96 h-96 bg-fuchsia-400/12 rounded-full blur-3xl"></div>
 
@@ -101,252 +153,58 @@ const LandingPage = () => {
             </p>
 
             {/* Primary Action Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
               <button
                 onClick={() => handleProtectedAction('/upload-resume')}
-                className="w-full sm:w-auto px-7 py-4 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white font-extrabold text-sm shadow-xl shadow-purple-600/30 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm shadow-xl shadow-purple-600/30 transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
               >
                 <FileCheck2 className="w-5 h-5" /> Analyze My Resume
               </button>
+
               <button
-                onClick={() => handleProtectedAction('/career-discovery')}
-                className="w-full sm:w-auto px-7 py-4 rounded-xl bg-white hover:bg-purple-100/60 text-stone-800 font-extrabold text-sm border border-purple-300/80 shadow-sm transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
+                onClick={() => handleProtectedAction('/career-discovery-intro')}
+                className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white hover:bg-purple-50 text-purple-900 font-bold text-sm border-2 border-purple-200 hover:border-purple-300 shadow-sm transition-all flex items-center justify-center gap-2 hover:scale-[1.02]"
               >
                 <Compass className="w-5 h-5 text-purple-600" /> Discover My Career Path
               </button>
             </div>
           </div>
-
-          {/* Hero Visual Mockup Card */}
-          <div className="mt-12 max-w-4xl mx-auto bg-[#fbf7fd] rounded-2xl p-5 sm:p-6 border border-purple-300/80 shadow-2xl relative overflow-hidden text-stone-900">
-            <div className="flex items-center justify-between pb-3 border-b border-purple-200/70 text-xs text-stone-500 font-medium">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-400"></span>
-                <span className="w-3 h-3 rounded-full bg-amber-400"></span>
-                <span className="w-3 h-3 rounded-full bg-emerald-400"></span>
-                <span className="ml-2 font-bold text-stone-800">
-                  SkillSync Dashboard Preview {uploadedFileName ? `• ${uploadedFileName}` : (hasAnalyzedResume && resumeData?.contact?.fullName ? `• ${resumeData.contact.fullName}` : '')}
-                </span>
-              </div>
-              {hasAnalyzedResume ? (
-                <span className="hidden sm:inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-full font-bold text-[11px]">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span> Live User Analysis
-                </span>
-              ) : (
-                <span className="hidden sm:inline bg-purple-100 text-purple-800 border border-purple-300/70 px-3 py-1 rounded-full font-bold">
-                  Live AI Preview
-                </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
-              <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-xs">
-                <div className="text-xs text-stone-500 font-semibold">ATS Score</div>
-                <div className="text-2xl font-extrabold text-purple-600 mt-1">
-                  {atsScore}<span className="text-xs text-stone-400">/100</span>
-                </div>
-                <div className="w-full bg-purple-50 h-2 rounded-full mt-2.5 overflow-hidden">
-                  <div
-                    className="bg-purple-600 h-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, Math.max(0, atsScore))}%` }}
-                  ></div>
-                </div>
-                <div className="text-[11px] text-stone-500 mt-1.5 font-medium">
-                  {atsScore >= 80 ? 'ATS Compliant' : 'Optimization Needed'}
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-xs">
-                <div className="text-xs text-stone-500 font-semibold">Target Job Match</div>
-                <div className="text-2xl font-extrabold text-violet-600 mt-1">
-                  {jobMatchScore}%
-                </div>
-                <div className="w-full bg-purple-50 h-2 rounded-full mt-2.5 overflow-hidden">
-                  <div
-                    className="bg-violet-600 h-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, Math.max(0, jobMatchScore))}%` }}
-                  ></div>
-                </div>
-                <div className="text-[11px] text-stone-500 mt-1.5 font-medium truncate">
-                  Role: {targetRole?.title || 'Frontend Developer'}
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-xs">
-                <div className="text-xs text-stone-500 font-semibold">Action Items Identified</div>
-                <div className="text-2xl font-extrabold text-amber-600 mt-1">
-                  {pendingCount} <span className="text-xs text-stone-400">{pendingCount === 0 ? 'All Fixed' : 'Fix First'}</span>
-                </div>
-                <div className="flex gap-1.5 mt-2 flex-wrap">
-                  {pendingIssues.length > 0 ? (
-                    pendingIssues.slice(0, 2).map((issue, idx) => (
-                      <span key={idx} className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold truncate max-w-[120px]">
-                        {issue.section || issue.title}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold">
-                      100% Resolved
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Live Detected Skills & Quick Navigation */}
-            <div className="mt-4 pt-3.5 border-t border-purple-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-stone-700">
-                  Detected Skills ({technicalSkills.length}):
-                </span>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {technicalSkills.slice(0, 6).map((skill, idx) => (
-                    <span
-                      key={idx}
-                      className="text-[11px] bg-purple-100/90 text-purple-800 font-semibold px-2 py-0.5 rounded-md border border-purple-200"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                  {technicalSkills.length > 6 && (
-                    <span className="text-[11px] text-stone-500 font-medium">
-                      +{technicalSkills.length - 6} more
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <button
-                onClick={() => handleProtectedAction('/resume-overview')}
-                className="text-xs font-bold text-purple-700 hover:text-purple-900 flex items-center gap-1 self-end sm:self-auto hover:underline transition-colors"
-              >
-                <span>View Full Analysis</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Quick Entry Cards Section */}
-      <section className="py-16 bg-gradient-to-b from-[#f3e8fa] via-purple-100/40 to-white border-b border-purple-200/60 relative z-10">
+      {/* Services Section */}
+      <section id="services" className="py-16 md:py-24 bg-[#f8f4fc] border-b border-purple-200/70 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Choose Your Goal</h2>
-            <p className="text-sm text-stone-600 mt-2">Select the path that best fits your current career preparation stage.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* Entry Card 1 */}
-            <div
-              onClick={() => handleProtectedAction('/upload-resume')}
-              className="bg-[#fbf7fd] hover:bg-purple-100/60 rounded-3xl p-8 border-2 border-purple-200/80 hover:border-purple-600 shadow-soft shadow-card-hover cursor-pointer group transition-all"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-purple-100/90 text-purple-700 border border-purple-300/60 flex items-center justify-center mb-6 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                <FileCheck2 className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-extrabold text-stone-900">I Already Have a Resume</h3>
-              <p className="text-xs text-stone-600 mt-2 leading-relaxed">
-                Upload your existing PDF, DOCX, or image resume to evaluate your overall ATS score, check alignment against target job descriptions, fix weak bullet points, and recheck your score.
-              </p>
-              <div className="mt-6 flex items-center gap-2 text-xs font-bold text-purple-600 group-hover:translate-x-1.5 transition-transform">
-                Start Resume Analysis <ArrowRight className="w-4 h-4" />
-              </div>
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold">
+              <Sparkles className="w-3.5 h-3.5" /> All Services & Capabilities
             </div>
-
-            {/* Entry Card 2 */}
-            <div
-              onClick={() => handleProtectedAction('/career-discovery')}
-              className="bg-[#fbf7fd] hover:bg-purple-100/60 rounded-3xl p-8 border-2 border-purple-200/80 hover:border-purple-600 shadow-soft shadow-card-hover cursor-pointer group transition-all"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-purple-100/90 text-purple-700 border border-purple-300/60 flex items-center justify-center mb-6 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                <Compass className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-extrabold text-stone-900">I'm Not Sure What Career I Want</h3>
-              <p className="text-xs text-stone-600 mt-2 leading-relaxed">
-                Complete an interactive guided questionnaire based on your background, preferences, and interest to discover matching career roles, skill roadmaps, and build a new resume.
-              </p>
-              <div className="mt-6 flex items-center gap-2 text-xs font-bold text-purple-600 group-hover:translate-x-1.5 transition-transform">
-                Discover Career Path <ArrowRight className="w-4 h-4" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Connected 4-Step How It Works Section */}
-      <section id="how-it-works" className="py-20 bg-gradient-to-b from-white via-purple-100/40 to-[#f3e8fa] border-b border-purple-200/60 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">How SkillSync Works</h2>
-            <p className="text-sm text-stone-600 mt-2">Click any step to view its detailed step-by-step workflow explanation.</p>
+            <h2 className="text-3xl font-extrabold text-stone-900 tracking-tight">
+              A Complete AI Career Acceleration Suite
+            </h2>
+            <p className="text-sm text-stone-600 leading-relaxed">
+              Explore 8 dedicated tools engineered to evaluate ATS compatibility, bridge technical skill gaps, and optimize your hireability.
+            </p>
           </div>
 
-          {/* Connected Steps Grid with Connector Line */}
-          <div className="relative">
-            {/* Horizontal Line Connector on Desktop */}
-            <div className="hidden lg:block absolute top-1/2 left-16 right-16 h-1.5 bg-gradient-to-r from-purple-400 via-violet-600 to-fuchsia-500 -translate-y-6 z-0 rounded-full shadow-sm"></div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-              {stepsData.map((st) => {
-                const IconComponent = st.icon;
-
-                return (
-                  <div
-                    key={st.number}
-                    onClick={() => setSelectedStepNumber(st.number)}
-                    className="bg-[#fbf7fd] p-6 rounded-3xl border border-purple-200/80 shadow-soft hover:shadow-xl hover:border-purple-500 cursor-pointer transition-all hover:-translate-y-2 group flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${st.color} text-white font-extrabold text-sm flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
-                          {st.number}
-                        </div>
-                        <IconComponent className="w-5 h-5 text-purple-400 group-hover:text-purple-700 transition-colors" />
-                      </div>
-
-                      <h4 className="font-extrabold text-stone-900 text-base group-hover:text-purple-700 transition-colors">{st.title}</h4>
-                      <p className="text-xs text-stone-500 mt-2 leading-relaxed">{st.desc}</p>
-                    </div>
-
-                    <div className="mt-6 pt-3 border-t border-purple-200/60 flex items-center justify-between text-xs font-bold text-purple-600 group-hover:translate-x-1 transition-transform">
-                      <span>Click for Process Details</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid Section */}
-      <section id="features" className="py-16 bg-gradient-to-b from-[#f3e8fa] via-purple-50/30 to-[#f3e8fa] border-b border-purple-200/60 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Platform Services</h2>
-            <p className="text-sm text-stone-600 mt-2">Click any service card to view its detailed step-by-step working process.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {PLATFORM_SERVICES.slice(0, 6).map((service) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {PLATFORM_SERVICES.map((srv) => (
               <div
-                key={service.id}
-                onClick={() => setSelectedService(service)}
-                className="bg-[#fbf7fd] hover:bg-purple-100/60 p-6 rounded-2xl border border-purple-200/80 shadow-soft hover:border-purple-500 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
+                key={srv.id}
+                onClick={() => setSelectedService(srv)}
+                className="group relative bg-[#fbf7fd] rounded-2xl p-6 border-2 border-purple-200/80 hover:border-purple-400 shadow-soft hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between hover:-translate-y-1"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-purple-100/90 text-purple-700 border border-purple-300/60 flex items-center justify-center font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                      <Sparkles className="w-5 h-5" />
-                    </div>
-                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100/70 text-purple-800 border border-purple-200">
-                      {service.badge}
-                    </span>
+                  <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-xs">
+                    <Sparkles className="w-6 h-6" />
                   </div>
-                  <h3 className="font-bold text-stone-900 text-base group-hover:text-purple-700 transition-colors">{service.title}</h3>
-                  <p className="text-xs text-stone-500 mt-2 leading-relaxed">{service.description}</p>
+
+                  <h3 className="font-bold text-stone-900 text-base mb-2 group-hover:text-purple-700 transition-colors">
+                    {srv.title}
+                  </h3>
+                  <p className="text-xs text-stone-600 leading-relaxed">
+                    {srv.description}
+                  </p>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-purple-200/60 flex items-center justify-between text-xs font-bold text-purple-600 group-hover:translate-x-1 transition-transform">
@@ -368,27 +226,70 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* FAQ Section */}
+      {/* Dynamic Gemini FAQ Section (Updated Daily via Gemini AI) */}
       <section id="faq" className="py-16 bg-gradient-to-b from-purple-50/40 to-[#f3e8fa] relative z-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
+          <div className="text-center mb-8 space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold mb-1 shadow-xs">
+              <Sparkles className="w-3.5 h-3.5" /> Powered by Google Gemini AI
+            </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Frequently Asked Questions</h2>
-            <p className="text-sm text-stone-600 mt-2">Everything you need to know about SkillSync.</p>
+            <p className="text-xs sm:text-sm text-stone-600">
+              Live questions & insights directly curated from daily resume & job queries on Google Gemini.
+            </p>
+
+            {/* Daily Sync & Refresh Status Bar */}
+            <div className="mt-4 inline-flex flex-wrap items-center justify-center gap-3 bg-white/90 border border-purple-200/80 px-4 py-2 rounded-2xl shadow-xs text-xs">
+              <span className="flex items-center gap-1.5 text-purple-700 font-bold">
+                <Calendar className="w-3.5 h-3.5 text-purple-600" /> Daily Sync: {dailyFaqPayload.lastUpdated}
+              </span>
+              <span className="text-stone-300">|</span>
+              <span className="flex items-center gap-1 text-stone-600 font-medium">
+                <Flame className="w-3.5 h-3.5 text-amber-500" /> {dailyFaqPayload.trendingTheme}
+              </span>
+              <span className="text-stone-300">|</span>
+              <button
+                onClick={handleManualFaqRefresh}
+                disabled={isRefreshingFaqs}
+                className="flex items-center gap-1 text-purple-600 hover:text-purple-800 font-bold hover:underline transition-all"
+                title="Refresh today's FAQs from Gemini AI"
+              >
+                <RefreshCw className={`w-3 h-3 ${isRefreshingFaqs ? 'animate-spin' : ''}`} />
+                {isRefreshingFaqs ? 'Syncing...' : 'Sync Today\'s FAQs'}
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
-            {faqs.map((faq, idx) => (
-              <div key={idx} className="border border-purple-200/80 rounded-2xl overflow-hidden bg-[#fbf7fd] shadow-xs">
+            {dailyFaqPayload.faqs.map((faq, idx) => (
+              <div key={idx} className="border border-purple-200/80 rounded-2xl overflow-hidden bg-[#fbf7fd] shadow-xs transition-all">
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}
                   className="w-full p-5 text-left font-bold text-stone-800 text-sm flex items-center justify-between hover:bg-purple-100/50 transition-colors"
                 >
-                  <span>{faq.q}</span>
-                  <ChevronDown className={`w-4 h-4 text-purple-500 transition-transform ${openFaq === idx ? 'rotate-180' : ''}`} />
+                  <div className="flex items-center gap-3 pr-2">
+                    <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs shrink-0 font-bold">
+                      Q{idx + 1}
+                    </span>
+                    <span>{faq.q}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {faq.category && (
+                      <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                        {faq.category}
+                      </span>
+                    )}
+                    <ChevronDown className={`w-4 h-4 text-purple-500 transition-transform ${openFaq === idx ? 'rotate-180' : ''}`} />
+                  </div>
                 </button>
                 {openFaq === idx && (
                   <div className="px-5 pb-5 text-xs text-stone-600 leading-relaxed border-t border-purple-200/60 pt-3 bg-white">
-                    {faq.a}
+                    <p className="whitespace-pre-wrap">{faq.a}</p>
+                    {faq.trendingScore && (
+                      <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-purple-600">
+                        <Flame className="w-3 h-3 text-amber-500" /> {faq.trendingScore}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

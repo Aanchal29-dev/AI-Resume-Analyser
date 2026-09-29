@@ -9,7 +9,13 @@ import {
   MOCK_HISTORY_ITEMS
 } from '../data/mockData';
 import { validateResumeContent, calculateSectionCompleteness } from '../utils/resumeValidator';
-import { getGeminiApiKey, setGeminiApiKey as saveGeminiApiKey } from '../services/geminiService';
+import {
+  getGeminiApiKey,
+  setGeminiApiKey as saveGeminiApiKey,
+  generateAIChatResponse,
+  generateCareerRecommendationsWithGemini,
+  generateBulletOptimizationWithGemini
+} from '../services/geminiService';
 
 const AppContext = createContext();
 
@@ -45,6 +51,11 @@ export const computeResumeAnalysis = (resume, role, currentAnalysis = INITIAL_AN
   if (completeness.sections.projects) atsBase += 12;
   if (completeness.sections.skills) atsBase += Math.min(10, Math.round(technicalSkills.length * 1.2));
   if (completeness.sections.education) atsBase += 10;
+
+  // Bonus for verified certificates
+  if (resume?.certifications && resume.certifications.length > 0) {
+    atsBase += Math.min(6, resume.certifications.length * 3);
+  }
 
   // Keyword relevance bonus
   atsBase += Math.round(matchRatio * 8);
@@ -120,7 +131,7 @@ export const AppProvider = ({ children }) => {
     setGeminiApiKeyState(key ? key.trim() : '');
   };
 
-  // Auth State (Persisted in localStorage until explicit logout)
+  // Auth State (Persisted in localStorage)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try {
       return localStorage.getItem('skillsync_auth') === 'true';
@@ -150,6 +161,27 @@ export const AppProvider = ({ children }) => {
     setHasAnalyzedResumeState(val);
     try {
       localStorage.setItem('skillsync_has_analyzed', val ? 'true' : 'false');
+    } catch (e) {}
+  };
+
+  // Verified Certificate State
+  const [verifiedCertificate, setVerifiedCertificateState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skillsync_verified_certificate');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const setVerifiedCertificate = (cert) => {
+    setVerifiedCertificateState(cert);
+    try {
+      if (cert) {
+        localStorage.setItem('skillsync_verified_certificate', JSON.stringify(cert));
+      } else {
+        localStorage.removeItem('skillsync_verified_certificate');
+      }
     } catch (e) {}
   };
 
@@ -238,6 +270,7 @@ export const AppProvider = ({ children }) => {
       return updated;
     });
   };
+
   const [scoreHistory, setScoreHistory] = useState([
     { version: 'v1.0 (Initial)', overallScore: 68, atsScore: 75, jobMatchScore: 65, date: '2026-09-10' },
     { version: 'v2.0 (Current)', overallScore: 78, atsScore: 84, jobMatchScore: 72, date: '2026-09-16' }
@@ -245,7 +278,7 @@ export const AppProvider = ({ children }) => {
 
   // Career Discovery State
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState({});
-  const [recommendedRoles, setRecommendedRoles] = useState(SAMPLE_JOB_ROLES.slice(0, 3));
+  const [recommendedRoles, setRecommendedRoles] = useState(SAMPLE_JOB_ROLES.slice(0, 4));
 
   // Learning Plan State
   const [learningPlan, setLearningPlan] = useState(MOCK_LEARNING_RESOURCES);
@@ -334,7 +367,6 @@ export const AppProvider = ({ children }) => {
       return { success: true, message: 'Logged in successfully!' };
     }
     
-    // If not in registered list, create account / log in as user
     const autoName = email.split('@')[0];
     const formattedName = autoName.charAt(0).toUpperCase() + autoName.slice(1);
     const newUser = { email, password, fullName: formattedName };
@@ -356,23 +388,68 @@ export const AppProvider = ({ children }) => {
     } catch (e) {}
   };
 
-  // 1. Upload & Validate Resume (Async Validation)
+  // Helper to merge verified certificate into resume
+  const mergeCertificateIntoResume = (certDetails, origAudit) => {
+    setVerifiedCertificate({
+      details: certDetails,
+      originality: origAudit
+    });
+
+    setResumeData(prev => {
+      const existingCerts = prev.certifications || [];
+      const newCert = {
+        name: certDetails.title,
+        issuer: certDetails.issuer,
+        year: certDetails.issueDate || '2026',
+        credentialId: certDetails.credentialId,
+        verified: true,
+        authenticityScore: origAudit.authenticityScore
+      };
+
+      const certs = [newCert, ...existingCerts.filter(c => c.name !== newCert.name)];
+
+      // Merge new skills
+      const currentTech = Array.isArray(prev.skills?.technical) ? prev.skills.technical : [];
+      const addedSkills = certDetails.skills || [];
+      const mergedTech = Array.from(new Set([...currentTech, ...addedSkills]));
+
+      return {
+        ...prev,
+        certifications: certs,
+        skills: {
+          ...prev.skills,
+          technical: mergedTech
+        }
+      };
+    });
+  };
+
+  // 1. Upload & Validate Resume or Certificate
   const handleUploadResume = async (fileOrText) => {
     // 1. If Text string is passed
     if (typeof fileOrText === 'string') {
-      const validation = await validateResumeContent(fileOrText, 'Pasted_Resume_Text.txt', 'text/plain');
+      const validation = await validateResumeContent(fileOrText, 'Pasted_Text.txt', 'text/plain');
       if (!validation.isValid) {
         return { success: false, error: validation.error };
       }
 
       setHasAnalyzedResume(true);
-      setUploadedFileName('Pasted_Resume_Text.txt');
+      setUploadedFileName(validation.isCertificate ? 'Verified_Certificate_Document.txt' : 'Pasted_Resume_Text.txt');
       setUploadedFileSize(`${Math.max(1, Math.round(fileOrText.length / 1024))} KB`);
 
-      let updatedResume = { ...resumeData };
+      if (validation.isCertificate && validation.certificateDetails) {
+        mergeCertificateIntoResume(validation.certificateDetails, validation.originalityAudit);
+        setAnalysis(prev => computeResumeAnalysis(resumeData, targetRole, prev));
+        return {
+          success: true,
+          isCertificate: true,
+          certificateDetails: validation.certificateDetails,
+          originalityAudit: validation.originalityAudit
+        };
+      }
 
+      let updatedResume = { ...resumeData };
       if (validation.parsedData) {
-        // If Gemini AI parsed it
         updatedResume = { ...resumeData, ...validation.parsedData };
       } else {
         const parsed = parseResumeText(fileOrText);
@@ -394,7 +471,7 @@ export const AppProvider = ({ children }) => {
 
       setResumeData(updatedResume);
       setAnalysis(prev => computeResumeAnalysis(updatedResume, targetRole, prev));
-      return { success: true };
+      return { success: true, isCertificate: false };
     } 
     
     // 2. If File object is passed
@@ -403,7 +480,6 @@ export const AppProvider = ({ children }) => {
       const fileType = fileOrText.type || '';
       const sizeKb = Math.round(fileOrText.size / 1024);
 
-      // Handle plain text files
       if (fileType === 'text/plain' || fileName.endsWith('.txt')) {
         return new Promise((resolve) => {
           const reader = new FileReader();
@@ -419,6 +495,18 @@ export const AppProvider = ({ children }) => {
               setHasAnalyzedResume(true);
               setUploadedFileName(fileName);
               setUploadedFileSize(`${sizeKb > 0 ? sizeKb : 1} KB`);
+
+              if (validation.isCertificate && validation.certificateDetails) {
+                mergeCertificateIntoResume(validation.certificateDetails, validation.originalityAudit);
+                setAnalysis(prev => computeResumeAnalysis(resumeData, targetRole, prev));
+                resolve({
+                  success: true,
+                  isCertificate: true,
+                  certificateDetails: validation.certificateDetails,
+                  originalityAudit: validation.originalityAudit
+                });
+                return;
+              }
 
               const parsed = parseResumeText(text);
               const updatedResume = {
@@ -437,18 +525,15 @@ export const AppProvider = ({ children }) => {
               };
               setResumeData(updatedResume);
               setAnalysis(prev => computeResumeAnalysis(updatedResume, targetRole, prev));
-              resolve({ success: true });
+              resolve({ success: true, isCertificate: false });
             } else {
               resolve({ success: false, error: 'Could not read text content from the file.' });
             }
           };
           reader.readAsText(fileOrText);
         });
-      } 
-      
-      // Handle PDF, DOCX, Images
-      else {
-        // Run validation check on filename/type
+      } else {
+        // PDF, DOCX, Images
         const validation = await validateResumeContent('', fileName, fileType);
         if (!validation.isValid) {
           return { success: false, error: validation.error };
@@ -457,18 +542,27 @@ export const AppProvider = ({ children }) => {
         setHasAnalyzedResume(true);
         setUploadedFileName(fileName);
         setUploadedFileSize(`${sizeKb > 0 ? sizeKb : 240} KB`);
+
+        if (validation.isCertificate && validation.certificateDetails) {
+          mergeCertificateIntoResume(validation.certificateDetails, validation.originalityAudit);
+          setAnalysis(prev => computeResumeAnalysis(resumeData, targetRole, prev));
+          return {
+            success: true,
+            isCertificate: true,
+            certificateDetails: validation.certificateDetails,
+            originalityAudit: validation.originalityAudit
+          };
+        }
+
         setAnalysis(prev => computeResumeAnalysis(resumeData, targetRole, prev));
-        return { success: true };
+        return { success: true, isCertificate: false };
       }
-    } 
-    
-    // 3. Fallback sample resume (if triggered without args)
-    else {
+    } else {
       setHasAnalyzedResume(true);
       setUploadedFileName('Sample_Resume_Uploaded.pdf');
       setUploadedFileSize('240 KB');
       setAnalysis(prev => computeResumeAnalysis(resumeData, targetRole, prev));
-      return { success: true };
+      return { success: true, isCertificate: false };
     }
   };
 
@@ -476,12 +570,14 @@ export const AppProvider = ({ children }) => {
     setUploadedFileName('');
     setUploadedFileSize('');
     setHasAnalyzedResume(false);
+    setVerifiedCertificate(null);
     try {
       localStorage.removeItem('skillsync_file_name');
       localStorage.removeItem('skillsync_file_size');
       localStorage.removeItem('skillsync_has_analyzed');
       localStorage.removeItem('skillsync_resume_data');
       localStorage.removeItem('skillsync_analysis');
+      localStorage.removeItem('skillsync_verified_certificate');
     } catch (e) {}
     setResumeData(SAMPLE_RESUMES.default.parsed);
     setAnalysis(INITIAL_ANALYSIS_RESULT);
@@ -563,15 +659,35 @@ export const AppProvider = ({ children }) => {
     setScoreHistory(prev => [newVersion, ...prev]);
   };
 
-  // 5. Submit Career Discovery Questionnaire
-  const handleSubmitQuestionnaire = (answers) => {
+  // 5. Submit Career Discovery Questionnaire (Powered by Gemini AI)
+  const handleSubmitQuestionnaire = async (answers) => {
     setQuestionnaireAnswers(answers);
+    try {
+      const skills = Array.isArray(resumeData?.skills?.technical) ? resumeData.skills.technical : [];
+      const aiRecs = await generateCareerRecommendationsWithGemini(answers, skills);
+      if (aiRecs?.recommendations && aiRecs.recommendations.length > 0) {
+        // Map AI recommendations to role objects
+        const formattedRoles = aiRecs.recommendations.map((rec, idx) => ({
+          id: rec.id || `ai-role-${idx}`,
+          title: rec.title,
+          category: rec.category || 'Technology',
+          matchPercentage: rec.matchPercentage || 85,
+          whyFit: rec.whyFit,
+          requiredSkills: rec.skillsToLearn || ['React', 'JavaScript', 'System Architecture'],
+          responsibilities: rec.recommendedNextSteps || ['Deep dive into foundational skills', 'Build project artifacts']
+        }));
+        setRecommendedRoles(formattedRoles);
+        return;
+      }
+    } catch (e) {
+      console.warn('Gemini Career Recommendations fallback:', e);
+    }
     const matched = [...SAMPLE_JOB_ROLES].slice(0, 4);
     setRecommendedRoles(matched);
   };
 
-  // 6. Send AI Assistant Chat Message
-  const handleSendChatMessage = (text) => {
+  // 6. Send AI Assistant Chat Message (Live Gemini AI Engine)
+  const handleSendChatMessage = async (text) => {
     if (!text.trim()) return;
 
     const userMsg = {
@@ -584,32 +700,51 @@ export const AppProvider = ({ children }) => {
     setChatMessages(prev => [...prev, userMsg]);
     setIsChatLoading(true);
 
-    setTimeout(() => {
-      let aiText = "That's a great question! ";
-      const lower = text.toLowerCase();
-
-      if (lower.includes('score') || lower.includes('ats')) {
-        aiText += `Your current overall resume score is **${analysis.overallScore}/100** with **${analysis.atsCompatibility}% ATS Compatibility**. Your structural layout is solid, but adding missing keywords like **TypeScript** and **Web Performance** will boost your score above 90.`;
-      } else if (lower.includes('role') || lower.includes('match')) {
-        aiText += `Based on your resume, you match **Frontend Developer** at **72%**. You are also a strong candidate for **Full Stack Developer** (68%) and **UI/UX Engineer** (75%).`;
-      } else if (lower.includes('bullet') || lower.includes('summary')) {
-        aiText += `Here is an optimized summary for your resume:\n\n*"Results-driven Frontend Developer skilled in React, JavaScript, and Tailwind CSS. Built responsive web applications serving 1,000+ users with a focus on UI performance and clean API integration."*`;
-      } else if (lower.includes('skill') || lower.includes('learn')) {
-        aiText += `To maximize your hireability for modern Frontend Developer positions, we recommend prioritizing these 3 skills:\n1. **TypeScript** (High Priority)\n2. **React Testing Library / Jest** (Medium Priority)\n3. **Web Vitals & Performance Optimization** (High Priority)`;
-      } else {
-        aiText += `I recommend reviewing the **Fix First** section in your Problems & Suggestions report. Updating your passive action verbs to quantified accomplishment statements will significantly improve recruiter response rates.`;
-      }
+    try {
+      const aiReply = await generateAIChatResponse(
+        text,
+        chatMessages,
+        activeResumeData,
+        targetRole
+      );
 
       const aiMsg = {
         id: `m-${Date.now() + 1}`,
         sender: 'assistant',
-        text: aiText,
+        text: aiReply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
       setChatMessages(prev => [...prev, aiMsg]);
       setIsChatLoading(false);
-    }, 1000);
+    } catch (err) {
+      console.warn('Live Gemini chat error, falling back to local coach:', err);
+      // Contextual fallback if network/quota issue
+      setTimeout(() => {
+        let aiText = "Here is an analysis based on your current resume: ";
+        const lower = text.toLowerCase();
+
+        if (lower.includes('score') || lower.includes('ats')) {
+          aiText += `Your current overall resume score is **${analysis.overallScore}/100** with **${analysis.atsCompatibility}% ATS Compatibility**. Adding high-impact metrics and missing technical keywords like **TypeScript** will boost your score above 90.`;
+        } else if (lower.includes('role') || lower.includes('match')) {
+          aiText += `Based on your resume, you match **${targetRole.title}** at **${analysis.jobMatchScore}%**. Your background also aligns with **Full Stack Developer** and **UI/UX Engineer**.`;
+        } else if (lower.includes('bullet') || lower.includes('summary')) {
+          aiText += `Here is an optimized bullet suggestion:\n\n*"Architected high-throughput React interface with Tailwind CSS, improving page load speed by 35% and increasing onboarding engagement for 1,200+ active users."*`;
+        } else {
+          aiText += `I recommend reviewing the **Fix First** section in your Problems & Suggestions report to replace passive verbs with quantified accomplishment statements.`;
+        }
+
+        const aiMsg = {
+          id: `m-${Date.now() + 1}`,
+          sender: 'assistant',
+          text: aiText,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+
+        setChatMessages(prev => [...prev, aiMsg]);
+        setIsChatLoading(false);
+      }, 700);
+    }
   };
 
   const handleClearChat = () => {
@@ -663,6 +798,7 @@ export const AppProvider = ({ children }) => {
         userProfile,
         registeredUsers,
         geminiApiKey,
+        verifiedCertificate,
 
         // Auth
         login,

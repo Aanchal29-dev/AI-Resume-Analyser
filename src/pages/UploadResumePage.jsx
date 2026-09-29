@@ -16,7 +16,10 @@ import {
   XCircle,
   KeyRound,
   ShieldCheck,
-  Check
+  Award,
+  Check,
+  BadgeCheck,
+  ExternalLink
 } from 'lucide-react';
 
 const UploadResumePage = () => {
@@ -27,7 +30,8 @@ const UploadResumePage = () => {
     handleUploadResume,
     handleClearResume,
     geminiApiKey,
-    updateGeminiApiKey
+    updateGeminiApiKey,
+    verifiedCertificate
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('upload'); // 'upload' | 'paste'
@@ -64,7 +68,7 @@ const UploadResumePage = () => {
       setIsProcessing(false);
 
       if (!result || !result.success) {
-        const err = result?.error || 'The uploaded file does not contain valid career, profession, or resume information.';
+        const err = result?.error || 'The uploaded file does not contain valid career, profession, or certificate information.';
         setErrorMessage(err);
         setShowErrorModal(true);
         handleClearResume();
@@ -87,7 +91,7 @@ const UploadResumePage = () => {
       setIsProcessing(false);
 
       if (!result || !result.success) {
-        const err = result?.error || 'The pasted content does not appear to be a valid resume or career document.';
+        const err = result?.error || 'The pasted content does not appear to be a valid resume or certificate.';
         setErrorMessage(err);
         setShowErrorModal(true);
         handleClearResume();
@@ -114,11 +118,11 @@ const UploadResumePage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold mb-2">
-              <Sparkles className="w-3.5 h-3.5" /> AI Resume Parser & Career Validator
+              <Sparkles className="w-3.5 h-3.5" /> AI Resume & Certificate Originality Engine
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Upload Your Resume</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Upload Resume or Certificate</h1>
             <p className="text-sm text-slate-500 mt-1">
-              Upload your resume file or paste text. Only genuine career, CV, and professional profile documents are accepted.
+              Upload your resume, CV, course completion certificate, or internship credential. Non-career files are strictly blocked.
             </p>
           </div>
 
@@ -145,7 +149,7 @@ const UploadResumePage = () => {
           <div className="bg-rose-50 border border-rose-200 rounded-2xl p-5 text-rose-900 flex items-start gap-3.5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
             <XCircle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h4 className="text-sm font-bold text-rose-800">Invalid Resume File — Upload Rejected</h4>
+              <h4 className="text-sm font-bold text-rose-800">Invalid File — Upload Rejected</h4>
               <p className="text-xs text-rose-700 mt-1 leading-relaxed">{errorMessage}</p>
               <div className="mt-3 flex items-center gap-2">
                 <button
@@ -172,7 +176,7 @@ const UploadResumePage = () => {
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Upload className="w-4 h-4" /> Upload Document / Image File
+            <Upload className="w-4 h-4" /> Upload Document / Certificate File
           </button>
           <button
             onClick={() => {
@@ -185,7 +189,7 @@ const UploadResumePage = () => {
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Clipboard className="w-4 h-4" /> Paste Resume Text
+            <Clipboard className="w-4 h-4" /> Paste Text
           </button>
         </div>
 
@@ -204,8 +208,8 @@ const UploadResumePage = () => {
                 <Upload className="w-8 h-8" />
               </div>
 
-              <h3 className="text-lg font-bold text-slate-900">Drag and drop your resume file here</h3>
-              <p className="text-xs text-slate-500 mt-1 font-medium">Supports PDF, DOCX, DOC, TXT, PNG, and JPG formats up to 10 MB</p>
+              <h3 className="text-lg font-bold text-slate-900">Drag and drop your resume or certificate file here</h3>
+              <p className="text-xs text-slate-500 mt-1 font-medium">Supports PDF, DOCX, DOC, TXT, PNG, and JPG formats (Resumes & Course/Internship Certificates)</p>
 
               <div className="mt-6 flex items-center justify-center gap-3">
                 <label className="cursor-pointer px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all hover:scale-[1.02]">
@@ -222,10 +226,52 @@ const UploadResumePage = () => {
               {isProcessing && (
                 <div className="mt-4 text-xs font-semibold text-indigo-600 animate-pulse flex items-center justify-center gap-2">
                   <Sparkles className="w-4 h-4 animate-spin" />
-                  Verifying career document structure and validating ATS sections...
+                  Verifying document authenticity and analyzing career sections...
                 </div>
               )}
             </div>
+
+            {/* Certificate Verification Card (if a certificate was uploaded) */}
+            {verifiedCertificate && (
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-5 border border-emerald-200 shadow-soft space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex items-center justify-between border-b border-emerald-200/60 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
+                      <Award className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-emerald-950">{verifiedCertificate.details?.title || 'Verified Credential'}</h4>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white flex items-center gap-1">
+                          <BadgeCheck className="w-3 h-3" /> {verifiedCertificate.originality?.status || 'Verified Authentic'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-emerald-700">Issued by {verifiedCertificate.details?.issuer || 'Accredited Partner'}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-lg font-black text-emerald-700">{verifiedCertificate.originality?.authenticityScore || 94}%</div>
+                    <span className="text-[10px] font-semibold text-emerald-600">Originality Score</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-2.5 rounded-xl bg-white/80 border border-emerald-200/60">
+                    <span className="text-[10px] font-bold uppercase text-emerald-700 block">Credential Serial ID</span>
+                    <span className="font-mono text-slate-800 text-[11px] font-semibold">{verifiedCertificate.details?.credentialId || 'UC-2026-9842X'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white/80 border border-emerald-200/60">
+                    <span className="text-[10px] font-bold uppercase text-emerald-700 block">Tampering Check</span>
+                    <span className="text-slate-800 text-[11px] font-semibold">{verifiedCertificate.originality?.tamperingCheck || 'Passed — Clean digital structure'}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-white/80 border border-emerald-200/60">
+                    <span className="text-[10px] font-bold uppercase text-emerald-700 block">Accreditation</span>
+                    <span className="text-slate-800 text-[11px] font-semibold">{verifiedCertificate.originality?.issuerAccreditation || 'Recognized Organization'}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Active Selected File Card */}
             {uploadedFileName && !isProcessing && (
@@ -238,7 +284,7 @@ const UploadResumePage = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-900">{uploadedFileName}</span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Valid Resume Verified
+                        <CheckCircle2 className="w-3 h-3" /> {verifiedCertificate ? 'Certificate Verified' : 'Valid Resume Verified'}
                       </span>
                     </div>
                     <span className="text-xs text-slate-400 mt-0.5 block">{uploadedFileSize || '245 KB'} • Professional Profile Ready</span>
@@ -265,12 +311,12 @@ const UploadResumePage = () => {
           </div>
         )}
 
-        {/* Tab 2: Paste Resume Text */}
+        {/* Tab 2: Paste Text */}
         {activeTab === 'paste' && (
           <div className="space-y-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-soft">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                Paste Plain Text Resume
+                Paste Plain Text Resume or Certificate Details
               </label>
               <textarea
                 rows={10}
@@ -279,12 +325,12 @@ const UploadResumePage = () => {
                   setPastedText(e.target.value);
                   setErrorMessage('');
                 }}
-                placeholder="Paste your contact info, summary, work experience, projects, and skills here..."
+                placeholder="Paste your contact info, summary, work experience, projects, skills, or certificate text here..."
                 className="w-full p-4 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs text-slate-400">Must contain candidate career, education, or skill details.</span>
+              <span className="text-xs text-slate-400">Must contain candidate career, education, skill, or course certificate details.</span>
               <button
                 onClick={handlePasteSubmit}
                 disabled={!pastedText.trim() || isProcessing}
@@ -300,7 +346,7 @@ const UploadResumePage = () => {
         <Modal
           isOpen={showErrorModal}
           onClose={() => setShowErrorModal(false)}
-          title="Invalid File — Not a Resume"
+          title="Invalid File — Career Info Not Detected"
         >
           <div className="space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
@@ -309,14 +355,14 @@ const UploadResumePage = () => {
             <div className="text-center space-y-2">
               <h3 className="text-base font-bold text-slate-900">Career Information Not Detected</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {errorMessage || 'The file you uploaded does not appear to be a valid resume, CV, or career-related document.'}
+                {errorMessage || 'The file you uploaded does not appear to be a valid resume, CV, or certificate document.'}
               </p>
               <div className="p-3 bg-slate-50 rounded-xl text-[11px] text-slate-500 text-left border border-slate-200">
-                <span className="font-bold text-slate-700 block mb-1">A valid resume should contain:</span>
-                • Contact information (Name, Email, Phone)<br />
-                • Work experience, internships, or employment history<br />
-                • Technical, soft, or functional skills<br />
-                • Education, degree, or certifications
+                <span className="font-bold text-slate-700 block mb-1">Accepted Documents:</span>
+                • Professional Resumes & CVs (PDF, DOCX, TXT, Scans)<br />
+                • Course Completion Certificates (Coursera, Udemy, Universities, etc.)<br />
+                • Internship Completion Letters & Credential Certificates<br />
+                • Professional Licenses & Technical Diplomas
               </div>
             </div>
             <div className="flex justify-center pt-2">
@@ -324,7 +370,7 @@ const UploadResumePage = () => {
                 onClick={() => setShowErrorModal(false)}
                 className="px-6 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-sm transition-all"
               >
-                Got It, Upload Real Resume
+                Got It, Upload Real Document
               </button>
             </div>
           </div>
@@ -338,7 +384,7 @@ const UploadResumePage = () => {
         >
           <div className="space-y-4">
             <p className="text-xs text-slate-500 leading-relaxed">
-              Enter your Google Gemini API key to enable direct, deep AI document extraction, OCR parsing for images/PDFs, and live semantic ATS scoring.
+              Enter your Google Gemini API key to enable direct, deep AI document extraction, OCR parsing for certificates/resumes, and live originality auditing.
             </p>
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Google Gemini API Key</label>

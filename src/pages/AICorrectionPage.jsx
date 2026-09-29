@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
 import { useApp } from '../context/AppContext';
+import { generateBulletOptimizationWithGemini } from '../services/geminiService';
 import {
   Sparkles,
   Check,
@@ -13,22 +14,25 @@ import {
   AlertTriangle,
   RotateCcw,
   Save,
-  CheckCircle2
+  CheckCircle2,
+  Wand2
 } from 'lucide-react';
 
 const AICorrectionPage = () => {
   const navigate = useNavigate();
-  const { analysis, handleAcceptSuggestion, handleRunRecheck } = useApp();
+  const { analysis, targetRole, handleAcceptSuggestion, handleRunRecheck } = useApp();
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
   const [ignoredIds, setIgnoredIds] = useState([]);
   const [mobileToggle, setMobileToggle] = useState({}); // { [issueId]: 'original' | 'suggested' }
+  const [generatingId, setGeneratingId] = useState(null);
+  const [customSuggestions, setCustomSuggestions] = useState({}); // { [issueId]: string }
 
   const pendingIssues = analysis.issues.filter(i => i.severity !== 'Passed');
 
   const handleStartEdit = (issue) => {
     setEditingId(issue.id);
-    setEditText(issue.aiSuggestion || issue.originalText);
+    setEditText(customSuggestions[issue.id] || issue.aiSuggestion || issue.originalText);
   };
 
   const handleSaveEdit = (issueId) => {
@@ -44,6 +48,26 @@ const AICorrectionPage = () => {
     setMobileToggle(prev => ({ ...prev, [issueId]: mode }));
   };
 
+  const handleRegenerateWithGemini = async (issue) => {
+    setGeneratingId(issue.id);
+    try {
+      const res = await generateBulletOptimizationWithGemini(
+        issue.originalText || issue.title,
+        targetRole?.title || 'Software Developer'
+      );
+      if (res?.improvedBullet) {
+        setCustomSuggestions(prev => ({
+          ...prev,
+          [issue.id]: res.improvedBullet
+        }));
+      }
+    } catch (err) {
+      console.warn('Gemini bullet regeneration fallback:', err);
+    } finally {
+      setGeneratingId(null);
+    }
+  };
+
   return (
     <Sidebar>
       <div className="max-w-6xl mx-auto space-y-8">
@@ -51,11 +75,11 @@ const AICorrectionPage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold mb-2">
-              <Sparkles className="w-3.5 h-3.5" /> AI Content Optimization Engine
+              <Sparkles className="w-3.5 h-3.5" /> Gemini AI Content Optimization Engine
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">AI Resume Corrections</h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Compare original bullet points side-by-side with AI rewrites. Accept suggestions to boost your score.
+              Compare original bullet points side-by-side with Gemini AI rewrites. Accept suggestions to boost your ATS compatibility score.
             </p>
           </div>
 
@@ -89,6 +113,8 @@ const AICorrectionPage = () => {
             const isIgnored = ignoredIds.includes(issue.id);
             const isResolved = issue.status === 'resolved';
             const activeMobileTab = mobileToggle[issue.id] || 'suggested';
+            const currentSuggestion = customSuggestions[issue.id] || issue.aiSuggestion;
+            const isGenerating = generatingId === issue.id;
 
             if (isIgnored) return null;
 
@@ -146,7 +172,7 @@ const AICorrectionPage = () => {
                   }`}>
                     <div className="flex items-center justify-between text-xs font-bold text-indigo-700 uppercase tracking-wider mb-2">
                       <span className="flex items-center gap-1">
-                        <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> AI Quantified Bullet
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Gemini Quantified Bullet
                       </span>
                       {isResolved && <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">Accepted</span>}
                     </div>
@@ -176,18 +202,27 @@ const AICorrectionPage = () => {
                       </div>
                     ) : (
                       <p className="text-xs text-indigo-950 font-medium leading-relaxed bg-white p-3 rounded-lg border border-indigo-100">
-                        "{issue.aiSuggestion}"
+                        "{currentSuggestion}"
                       </p>
                     )}
                   </div>
                 </div>
 
-                {/* Explanation Note */}
-                <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between gap-4">
+                {/* Explanation Note & Actions */}
+                <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <p>💡 <span className="font-semibold text-slate-700">Improvement Rationale:</span> {issue.suggestedAction}</p>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => handleRegenerateWithGemini(issue)}
+                      disabled={isGenerating || isResolved}
+                      className="px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                      title="Generate fresh rewrite with Gemini AI"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
+                      {isGenerating ? 'Rewriting...' : 'Gemini AI Rewrite'}
+                    </button>
                     <button
                       onClick={() => handleIgnore(issue.id)}
                       className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 text-xs font-semibold"
