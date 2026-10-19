@@ -173,7 +173,63 @@ export const SAMPLE_JOB_ROLES = [
       'Create interactive executive dashboards using Tableau or PowerBI.',
       'Perform exploratory data analysis to spot market trends and anomalies.'
     ]
+  },
+  {
+    id: 'health-informatics',
+    title: 'Health Informatics & Clinical Data Specialist',
+    category: 'Healthcare & Life Sciences',
+    demand: 'High',
+    avgSalary: '$82,000 - $118,000',
+    description: 'Bridge medical clinical workflows and electronic health record (EHR) technologies to optimize patient care and data security.',
+    requiredSkills: ['Health Data Management', 'EHR / EMR Systems', 'SQL', 'HIPAA Compliance', 'Clinical Workflow', 'Data Analysis'],
+    niceToHave: ['Python', 'HL7 / FHIR Standards', 'Biostatistics', 'Tableau'],
+    responsibilities: [
+      'Analyze clinical data sets to optimize healthcare delivery outcomes and patient compliance.',
+      'Ensure strict regulatory adherence to HIPAA and medical data privacy standards.',
+      'Collaborate with healthcare practitioners to enhance electronic medical record interfaces.'
+    ]
+  },
+  {
+    id: 'financial-analyst',
+    title: 'Financial & Quantitative Analyst',
+    category: 'Finance & Banking',
+    demand: 'High',
+    avgSalary: '$88,000 - $130,000',
+    description: 'Evaluate financial performance, build quantitative risk models, and generate predictive investment projections.',
+    requiredSkills: ['Financial Modeling', 'Excel / VBA', 'SQL', 'Quantitative Risk Analysis', 'Financial Statement Analysis', 'Python'],
+    niceToHave: ['PowerBI', 'Tableau', 'Bloomberg Terminal', 'CFA / Series 7'],
+    responsibilities: [
+      'Construct complex DCF, sensitivity, and scenario-based financial models.',
+      'Deliver executive quarterly performance reports and market trend forecasts.',
+      'Evaluate investment portfolio risk and assist in capital allocation strategies.'
+    ]
+  },
+  {
+    id: 'uiux-designer',
+    title: 'UI/UX & Product Experience Designer',
+    category: 'Design & Media',
+    demand: 'High',
+    avgSalary: '$80,000 - $122,000',
+    description: 'Architect intuitive user journeys, wireframes, design systems, and responsive interactive prototypes for modern applications.',
+    requiredSkills: ['Figma', 'UI/UX Prototyping', 'User Research', 'Design Systems', 'Usability Testing', 'Information Architecture'],
+    niceToHave: ['HTML/CSS basics', 'Motion Design', 'Micro-interactions', 'WCAG Accessibility'],
+    responsibilities: [
+      'Conduct qualitative user interviews to define target personas and pain points.',
+      'Build end-to-end Figma interactive component libraries and design tokens.',
+      'Collaborate with frontend engineers to ensure high design fidelity during implementation.'
+    ]
   }
+];
+
+// Available Industries with Questionnaire Access
+export const AVAILABLE_INDUSTRIES = [
+  { id: 'tech', name: 'Software & Technology', icon: 'Laptop', description: 'Web, Backend, AI, Cloud & Mobile Engineering' },
+  { id: 'literature', name: 'Literature & Publishing', icon: 'BookOpen', description: 'Technical Writing, Content Strategy, UX Writing & Editorial' },
+  { id: 'business', name: 'Business & Marketing', icon: 'BarChart3', description: 'Data Analytics, Growth Strategy, Product & Operations' },
+  { id: 'healthcare', name: 'Healthcare & Medical Sciences', icon: 'HeartPulse', description: 'Health Informatics, Clinical Data, Biomedical & Health Tech' },
+  { id: 'finance', name: 'Finance, Banking & Accounting', icon: 'DollarSign', description: 'Financial Analysis, Risk Management, FinTech & Investment' },
+  { id: 'design', name: 'Design, Media & Creative Arts', icon: 'Palette', description: 'UI/UX Design, Visual Communication & Creative Direction' },
+  { id: 'others', name: 'Others', icon: 'Sparkles', description: 'Custom industry with AI-powered questionnaire and resume tailoring' }
 ];
 
 // Industry-Specific Questionnaires
@@ -274,6 +330,102 @@ export const FIELD_QUESTIONNAIRES = {
       options: [
         { label: "Excel, SQL Databases, and Tableau / PowerBI", role: "data-analyst" },
         { label: "Google Analytics, HubSpot, and SEO Tools", role: "content-strategist" }
+      ]
+    }
+  ],
+
+  healthcare: [
+    {
+      id: 1,
+      question: "Which healthcare or biomedical domain excites you most?",
+      category: "Domain Focus",
+      options: [
+        { label: "Health Informatics & Electronic Health Records (EHR)", role: "health-informatics" },
+        { label: "Clinical Data Analysis & Epidemiological Research", role: "data-analyst" },
+        { label: "Healthcare Operations & Regulatory Compliance (HIPAA)", role: "health-informatics" }
+      ]
+    },
+    {
+      id: 2,
+      question: "Which healthcare software and analysis tools have you explored?",
+      category: "Tools & Compliance",
+      options: [
+        { label: "SQL, Excel, and Medical Record Systems (Epic/Cerner)", role: "health-informatics" },
+        { label: "Python/R statistical modeling and Biostatistics", role: "data-analyst" },
+        { label: "HL7/FHIR communication standards and data security", role: "health-informatics" }
+      ]
+    },
+    {
+      id: 3,
+      question: "What is your main career aspiration in the healthcare domain?",
+      category: "Career Vision",
+      options: [
+        { label: "Optimize hospital workflows and patient data pipelines", role: "health-informatics" },
+        { label: "Uncover predictive health patterns using data analytics", role: "data-analyst" }
+      ]
+    }
+  ],
+
+  finance: [
+    {
+      id: 1,
+      question: "Which finance or quantitative domain aligns with your interest?",
+      category: "Domain Focus",
+      options: [
+        { label: "Corporate Financial Analysis & Valuation Modeling (DCF)", role: "financial-analyst" },
+        { label: "Quantitative Risk Modeling & Algorithmic FinTech", role: "financial-analyst" },
+        { label: "Commercial Banking, Auditing & Accounting Systems", role: "data-analyst" }
+      ]
+    },
+    {
+      id: 2,
+      question: "What analytical tools do you prefer for financial data?",
+      category: "Financial Tools",
+      options: [
+        { label: "Advanced Excel (VBA/Macros), DCF Models, and Pitch Decks", role: "financial-analyst" },
+        { label: "Python (Pandas/NumPy), SQL, and quantitative forecasting", role: "financial-analyst" },
+        { label: "PowerBI, Tableau, and executive budget dashboards", role: "data-analyst" }
+      ]
+    },
+    {
+      id: 3,
+      question: "What type of financial output do you aim to produce?",
+      category: "Deliverables",
+      options: [
+        { label: "Comprehensive investment memoranda and forecast models", role: "financial-analyst" },
+        { label: "Automated risk analytics and portfolio dashboards", role: "financial-analyst" }
+      ]
+    }
+  ],
+
+  design: [
+    {
+      id: 1,
+      question: "Which creative design discipline are you most drawn toward?",
+      category: "Creative Focus",
+      options: [
+        { label: "User Interface (UI) & User Experience (UX) Product Design", role: "uiux-designer" },
+        { label: "Design Systems, Micro-interactions & Visual Prototyping", role: "uiux-designer" },
+        { label: "Brand Identity, Motion Graphics & Visual Communication", role: "uiux-designer" }
+      ]
+    },
+    {
+      id: 2,
+      question: "What design software and toolchains do you use most?",
+      category: "Design Tools",
+      options: [
+        { label: "Figma, FigJam, and Auto-Layout Design Systems", role: "uiux-designer" },
+        { label: "Adobe Creative Suite (Photoshop, Illustrator, After Effects)", role: "uiux-designer" },
+        { label: "Wireframing tools, Usability Testing & Maze/UserTesting", role: "uiux-designer" }
+      ]
+    },
+    {
+      id: 3,
+      question: "What is your design philosophy and user research approach?",
+      category: "Methodology",
+      options: [
+        { label: "Human-centered design backed by usability testing and metrics", role: "uiux-designer" },
+        { label: "Aesthetic craftsmanship with focus on delightful microcopy", role: "ux-writer" }
       ]
     }
   ]

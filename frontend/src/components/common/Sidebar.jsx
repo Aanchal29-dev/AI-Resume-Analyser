@@ -133,14 +133,24 @@ const Sidebar = ({ children }) => {
 
         {/* Bottom User Profile & Sign Out Widget */}
         <div className="p-3 border-t border-purple-100 space-y-1">
-          <div className="flex items-center gap-3 p-2 rounded-xl bg-purple-50/70 border border-purple-200/60">
+          <div
+            onClick={() => navigate('/profile')}
+            className="flex items-center gap-3 p-2 rounded-xl bg-purple-50/70 border border-purple-200/60 hover:border-purple-300 hover:bg-purple-100/50 transition-colors cursor-pointer"
+            title="Manage Profile & Settings"
+          >
             <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-xs shrink-0 border border-purple-300 shadow-xs">
-              {userProfile.fullName ? userProfile.fullName.slice(0, 2).toUpperCase() : 'US'}
+              {userProfile?.fullName?.trim() && !['student', 'user', 'alex morgan', 'demo user', 'demo', 'candidate'].includes(userProfile.fullName.trim().toLowerCase())
+                ? userProfile.fullName.trim().slice(0, 2).toUpperCase()
+                : '👋'}
             </div>
             {!collapsed && (
               <div className="overflow-hidden text-left flex-1">
-                <div className="text-xs font-bold text-stone-900 truncate">{userProfile.fullName || 'User'}</div>
-                <div className="text-[10px] text-purple-700/80 truncate">{userProfile.email || 'user@example.com'}</div>
+                <div className="text-xs font-bold text-stone-900 truncate">
+                  {userProfile?.fullName?.trim() && !['student', 'user', 'alex morgan', 'demo user', 'demo', 'candidate'].includes(userProfile.fullName.trim().toLowerCase())
+                    ? userProfile.fullName.trim()
+                    : 'Hello'}
+                </div>
+                <div className="text-[10px] text-purple-700/80 truncate">{userProfile.email || 'Personal Workspace'}</div>
               </div>
             )}
           </div>

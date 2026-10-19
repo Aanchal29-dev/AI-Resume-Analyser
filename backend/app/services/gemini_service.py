@@ -209,15 +209,23 @@ class GeminiService:
         candidate_name: str = "Candidate",
         target_role: str = "Software Engineer",
     ) -> str:
-        """Generates unrestricted AI coaching and technical assistance response."""
+        """Generates unrestricted AI assistance with general answers first and role perspective at the end."""
         system_instruction = (
-            f'You are an elite, unrestricted AI Assistant, Career Coach, and Technical Mentor powered by Google Gemini. '
-            f'You are assisting {candidate_name} with target role {target_role}. '
-            'You have deep expertise in software engineering, full-stack development, coding, system design, '
-            'interview preparation, and executive resume crafting. '
-            'Always answer ANY question directly, thoroughly, and intelligently with clear markdown formatting. '
-            'Provide full code snippets, complete bullet point rewrites with metrics, ready-to-use summaries, '
-            'and deep technical explanations directly in the chat.'
+            "You are an unrestricted, highly capable, intelligent AI Assistant powered by Google Gemini. "
+            "You can answer ANY question well across all subjects, topics, and domains (technology, programming, "
+            "science, mathematics, business, history, daily life, interview prep, resumes, etc.).\n\n"
+            "CRITICAL INSTRUCTIONS ON ANSWER PERSPECTIVE & STRUCTURE:\n"
+            "1. GENERAL ANSWER FIRST (DEFAULT):\n"
+            "   - Always provide a direct, comprehensive, accurate, and high-quality GENERAL answer to whatever the user asks.\n"
+            "   - Do NOT answer solely from the narrow perspective of a frontend developer, or force the entire answer into a frontend or single role context, unless the user explicitly requested that specific perspective in their question.\n"
+            "   - Address the question objectively, authoritatively, and thoroughly first.\n\n"
+            "2. ROLE PERSPECTIVE AT THE END (IN THE SAME OUTPUT):\n"
+            f"   - After delivering the full general answer, provide a dedicated concluding section at the very end titled:\n"
+            f"     ---\n"
+            f"     ### 💡 Perspective for {target_role}\n"
+            f"   - In this section, provide 2-3 concise, practical sentences or points on how this concept, technology, or insight directly applies, connects, or gives an edge specifically in the context of a {target_role}.\n"
+            "   - If the user explicitly requested a specific perspective in their prompt (e.g., 'explain from a backend perspective'), follow the user's requested perspective.\n"
+            "   - If the user's message is a simple casual greeting (like 'hi' or 'hello'), respond naturally and warmly without unnecessary filler."
         )
 
         formatted_contents = []
@@ -234,9 +242,13 @@ class GeminiService:
             )
         except Exception:
             return (
-                f"Hello {candidate_name}! As your AI Career Coach & Technical Mentor for **{target_role}**, "
-                "I am here to answer any questions, review code, rewrite resume accomplishments with metrics, "
-                "conduct mock interviews, and help you land top engineering roles. What would you like to work on?"
+                f"### Overview & Key Concepts\n"
+                f"{message.strip().capitalize() if message else 'Your question'} involves foundational principles that apply widely across technology and engineering. "
+                f"When addressing this topic, standard best practices prioritize clarity, scalability, and measurable outcomes.\n\n"
+                f"---\n"
+                f"### 💡 Perspective for {target_role}\n"
+                f"In the context of **{target_role}**, understanding and applying this topic strengthens your project architecture, "
+                f"helps you articulate technical trade-offs during interviews, and demonstrates practical domain expertise on your resume."
             )
 
 

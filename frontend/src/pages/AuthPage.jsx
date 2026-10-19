@@ -56,7 +56,7 @@ const AuthPage = () => {
   };
 
   const handleQuickDemo = () => {
-    login('user@college.edu', 'password123', 'Alex Morgan');
+    login('user@college.edu', 'password123', '');
     const destination = fromRoute && fromRoute !== '/' ? fromRoute : '/dashboard';
     navigate(destination);
   };

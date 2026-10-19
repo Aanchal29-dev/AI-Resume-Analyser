@@ -24,9 +24,30 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCw,
-  MousePointer2
+  MousePointer2,
+  FileSearch,
+  Target,
+  FileText,
+  CheckSquare,
+  GraduationCap,
+  Bot,
+  History,
+  Zap
 } from 'lucide-react';
 import { PLATFORM_SERVICES } from '../data/mockData';
+
+const SERVICE_ICONS = {
+  FileSearch,
+  Cpu,
+  Target,
+  Sparkles,
+  FileText,
+  Compass,
+  CheckSquare,
+  GraduationCap,
+  Bot,
+  History
+};
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -172,7 +193,7 @@ const LandingPage = () => {
   };
 
   const scrollToServices = () => {
-    const el = document.getElementById('services');
+    const el = document.getElementById('features') || document.getElementById('services');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
     }
@@ -242,47 +263,58 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Services Section (Revealed Only on Scroll Down) */}
-      <section id="services" className="py-20 md:py-28 bg-[#f8f4fc] border-b border-purple-200/70 relative z-10">
+      {/* Features & Services Section */}
+      <section id="features" className="py-20 md:py-28 bg-[#f8f4fc] border-b border-purple-200/70 relative z-10">
+        <span id="services" className="sr-only">Services</span>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold shadow-xs">
               <Sparkles className="w-3.5 h-3.5" /> All Services & Capabilities
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
               A Complete AI Career Acceleration Suite
             </h2>
             <p className="text-sm text-stone-600 leading-relaxed">
-              Explore 8 dedicated tools engineered to evaluate ATS compatibility, bridge technical skill gaps, and optimize your hireability.
+              Explore 10 dedicated tools engineered to evaluate ATS compatibility, bridge technical skill gaps, and optimize your hireability.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {PLATFORM_SERVICES.map((srv) => (
-              <div
-                key={srv.id}
-                onClick={() => setSelectedService(srv)}
-                className="group relative bg-[#fbf7fd] rounded-2xl p-6 border-2 border-purple-200/80 hover:border-purple-400 shadow-soft hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between hover:-translate-y-1"
-              >
-                <div>
-                  <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-xs">
-                    <Sparkles className="w-6 h-6" />
+            {PLATFORM_SERVICES.map((srv) => {
+              const IconComponent = SERVICE_ICONS[srv.icon] || Sparkles;
+              return (
+                <div
+                  key={srv.id}
+                  onClick={() => setSelectedService(srv)}
+                  className="group relative bg-[#fbf7fd] rounded-2xl p-6 border-2 border-purple-200/80 hover:border-purple-400 shadow-soft hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between hover:-translate-y-1"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-xs">
+                        <IconComponent className="w-6 h-6" />
+                      </div>
+                      {srv.badge && (
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-purple-100/90 text-purple-800 border border-purple-200">
+                          {srv.badge}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="font-bold text-stone-900 text-base mb-2 group-hover:text-purple-700 transition-colors">
+                      {srv.title}
+                    </h3>
+                    <p className="text-xs text-stone-600 leading-relaxed">
+                      {srv.description}
+                    </p>
                   </div>
 
-                  <h3 className="font-bold text-stone-900 text-base mb-2 group-hover:text-purple-700 transition-colors">
-                    {srv.title}
-                  </h3>
-                  <p className="text-xs text-stone-600 leading-relaxed">
-                    {srv.description}
-                  </p>
+                  <div className="mt-4 pt-3 border-t border-purple-200/60 flex items-center justify-between text-xs font-bold text-purple-600 group-hover:translate-x-1 transition-transform">
+                    <span>View Process & Details</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </div>
                 </div>
-
-                <div className="mt-4 pt-3 border-t border-purple-200/60 flex items-center justify-between text-xs font-bold text-purple-600 group-hover:translate-x-1 transition-transform">
-                  <span>View Process & Details</span>
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="text-center mt-12">
@@ -291,6 +323,77 @@ const LandingPage = () => {
               className="inline-flex items-center gap-2 text-xs font-bold text-purple-800 hover:text-purple-950 bg-white hover:bg-purple-100/60 px-7 py-3.5 rounded-xl border border-purple-300 shadow-xs transition-colors"
             >
               Explore All Services <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-20 md:py-28 bg-[#fdfafc] border-b border-purple-200/70 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold shadow-xs">
+              <Zap className="w-3.5 h-3.5 text-purple-600" /> Simple 4-Step Process
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
+              How SkillSync Works
+            </h2>
+            <p className="text-sm text-stone-600 leading-relaxed">
+              From uploading your raw resume or taking a career quiz to unlocking interview-ready optimization in four simple steps.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative">
+            {stepsData.map((step) => {
+              const StepIcon = step.icon || Sparkles;
+              return (
+                <div
+                  key={step.number}
+                  onClick={() => setSelectedStepNumber(step.number)}
+                  className="group relative bg-white/95 hover:bg-[#fbf7fd] rounded-2xl p-6 border-2 border-purple-200/80 hover:border-purple-500 shadow-soft hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-between hover:-translate-y-1.5"
+                >
+                  <div>
+                    {/* Step Number & Icon Header */}
+                    <div className="flex items-center justify-between mb-5">
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${step.color} text-white flex items-center justify-center shadow-md shadow-purple-600/20 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
+                        <StepIcon className="w-6 h-6" />
+                      </div>
+                      <span className="text-xs font-black px-2.5 py-1 rounded-xl bg-purple-100/80 text-purple-800 border border-purple-200 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                        Step 0{step.number}
+                      </span>
+                    </div>
+
+                    <h3 className="font-extrabold text-stone-900 text-base mb-2 group-hover:text-purple-700 transition-colors">
+                      {step.title}
+                    </h3>
+                    <p className="text-xs text-stone-600 leading-relaxed">
+                      {step.desc}
+                    </p>
+                  </div>
+
+                  {/* Interactive Step Trigger */}
+                  <div className="mt-5 pt-3 border-t border-purple-200/60 flex items-center justify-between text-xs font-bold text-purple-700 group-hover:text-purple-900 group-hover:translate-x-1 transition-all">
+                    <span>Explore Step Details</span>
+                    <ArrowRight className="w-4 h-4 text-purple-600 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* CTA under How It Works */}
+          <div className="mt-12 text-center flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button
+              onClick={() => handleProtectedAction('/upload-resume')}
+              className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-purple-700 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white font-extrabold text-xs shadow-lg shadow-purple-600/30 transition-all hover:scale-105 flex items-center gap-2"
+            >
+              <Upload className="w-4 h-4" /> Start Step 1: Upload Resume
+            </button>
+            <button
+              onClick={() => handleProtectedAction('/career-discovery-intro')}
+              className="px-8 py-3.5 rounded-xl bg-white hover:bg-purple-50 text-purple-900 font-extrabold text-xs border border-purple-300 shadow-xs transition-all hover:scale-105 flex items-center gap-2"
+            >
+              <Compass className="w-4 h-4 text-purple-600" /> Or Start Career Quiz
             </button>
           </div>
         </div>

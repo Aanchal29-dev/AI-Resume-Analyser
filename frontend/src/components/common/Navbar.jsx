@@ -87,10 +87,18 @@ const Navbar = () => {
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-100/70 border border-purple-200 text-purple-800 text-xs font-bold hover:bg-purple-100 transition-colors">
+              <button
+                onClick={() => navigate('/profile')}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-100/70 border border-purple-200 text-purple-800 text-xs font-bold hover:bg-purple-100 hover:border-purple-300 transition-colors cursor-pointer"
+                title="View & Edit Profile"
+              >
                 <UserCheck className="w-4 h-4 text-purple-600" />
-                <span>{userProfile?.fullName || 'User'}</span>
-              </div>
+                <span>
+                  {userProfile?.fullName?.trim() && !['student', 'user', 'alex morgan', 'demo user', 'demo', 'candidate'].includes(userProfile.fullName.trim().toLowerCase())
+                    ? userProfile.fullName.trim()
+                    : 'Hello'}
+                </span>
+              </button>
               <button
                 onClick={() => navigate('/dashboard')}
                 className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-purple-900 bg-purple-100 hover:bg-purple-200 hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 rounded-xl transition-all duration-200 cursor-pointer"

@@ -119,11 +119,11 @@ const AIAssistantPage = () => {
   const messagesEndRef = useRef(null);
 
   const promptPills = [
+    "Explain how cloud computing works",
+    "What is an API and how does it function?",
     "Give me 2 strong bullet examples for my role",
-    "Draft a compelling 3-line resume summary",
-    "What are top interview questions for my role?",
-    "Explain my ATS score & how to reach 95+",
-    "What high-demand skills should I learn next?"
+    "How to structure winning interview answers (STAR method)",
+    "Explain how neural networks learn"
   ];
 
   const scrollToBottom = () => {
@@ -150,19 +150,19 @@ const AIAssistantPage = () => {
     <Sidebar>
       <div className="max-w-4xl mx-auto h-[calc(100vh-7rem)] flex flex-col space-y-4 font-sans">
         {/* Top Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="flex items-center justify-between border-b border-purple-200/80 pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-xs">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-violet-600 flex items-center justify-center text-white shadow-xs">
               <Bot className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-extrabold text-slate-900">SkillSync AI Career Coach</h1>
+                <h1 className="text-xl font-extrabold text-stone-900">SkillSync Gemini AI Assistant</h1>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Gemini 3.1 Live
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium">Direct answers, custom bullet rewrites, interview coaching & technical explanations</p>
+              <p className="text-[11px] text-stone-500 font-medium">Unrestricted AI Assistant • In-depth general answers first with tailored role perspective</p>
             </div>
           </div>
 
@@ -247,13 +247,13 @@ const AIAssistantPage = () => {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             disabled={isChatLoading}
-            placeholder="Ask anything: 'Write 3 bullets for my React project', 'Explain ATS algorithms', 'Interview tips'..."
-            className="flex-1 p-3 rounded-xl border border-slate-200 bg-white text-xs font-medium focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100 disabled:bg-slate-50"
+            placeholder="Ask any question: general knowledge, science, coding, career strategy, or resume tips..."
+            className="flex-1 p-3 rounded-xl border border-purple-200 bg-white text-stone-900 text-xs font-medium focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 disabled:bg-purple-50 placeholder:text-stone-400"
           />
           <button
             type="submit"
             disabled={!inputText.trim() || isChatLoading}
-            className="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center shrink-0"
+            className="px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 disabled:opacity-40 text-white font-bold text-xs shadow-md shadow-purple-600/25 transition-all flex items-center justify-center shrink-0 cursor-pointer"
           >
             <Send className="w-4 h-4" />
           </button>

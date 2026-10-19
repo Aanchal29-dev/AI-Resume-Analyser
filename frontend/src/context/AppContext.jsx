@@ -6,7 +6,9 @@ import {
   INITIAL_ANALYSIS_RESULT,
   MOCK_LEARNING_RESOURCES,
   INITIAL_AI_CHAT_MESSAGES,
-  MOCK_HISTORY_ITEMS
+  MOCK_HISTORY_ITEMS,
+  AVAILABLE_INDUSTRIES,
+  FIELD_QUESTIONNAIRES
 } from '../data/mockData';
 import { validateResumeContent, calculateSectionCompleteness } from '../utils/resumeValidator';
 import {
@@ -14,7 +16,9 @@ import {
   setGeminiApiKey as saveGeminiApiKey,
   generateAIChatResponse,
   generateCareerRecommendationsWithGemini,
-  generateBulletOptimizationWithGemini
+  generateBulletOptimizationWithGemini,
+  generateDynamicIndustryQuestionnaireWithGemini,
+  analyzeIndustryAndBuildResumeWithGemini
 } from '../services/geminiService';
 import { backendApi } from '../services/backendApi';
 
@@ -291,6 +295,16 @@ export const AppProvider = ({ children }) => {
   // Analysis History State
   const [historyItems, setHistoryItems] = useState(MOCK_HISTORY_ITEMS);
 
+  // Clean helper to prevent generic demo names
+  const sanitizeFullName = (name) => {
+    if (!name || typeof name !== 'string') return '';
+    const trimmed = name.trim();
+    if (['alex morgan', 'user', 'student', 'demo user', 'demo', 'candidate'].includes(trimmed.toLowerCase())) {
+      return '';
+    }
+    return trimmed;
+  };
+
   // Profile / Settings State
   const [userProfile, setUserProfileState] = useState(() => {
     const defaultProfile = {
@@ -305,7 +319,8 @@ export const AppProvider = ({ children }) => {
     try {
       const saved = localStorage.getItem('skillsync_user_profile');
       if (saved) {
-        return { ...defaultProfile, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        return { ...defaultProfile, ...parsed, fullName: sanitizeFullName(parsed?.fullName) };
       }
     } catch (e) {}
     return defaultProfile;
@@ -321,6 +336,67 @@ export const AppProvider = ({ children }) => {
     });
   };
 
+  // Dynamic Industry & Questionnaire State
+  const [selectedIndustry, setSelectedIndustryState] = useState(() => {
+    try {
+      return localStorage.getItem('skillsync_selected_industry') || 'Software & Technology';
+    } catch (e) {
+      return 'Software & Technology';
+    }
+  });
+
+  const setSelectedIndustry = (val) => {
+    setSelectedIndustryState(val);
+    try {
+      localStorage.setItem('skillsync_selected_industry', val);
+    } catch (e) {}
+  };
+
+  const [customIndustryName, setCustomIndustryName] = useState('');
+  const [activeDynamicQuestionnaire, setActiveDynamicQuestionnaire] = useState(null);
+  const [isGeneratingQuestionnaire, setIsGeneratingQuestionnaire] = useState(false);
+  const [isAnalyzingIndustry, setIsAnalyzingIndustry] = useState(false);
+
+  const [aiIndustryAnalysis, setAiIndustryAnalysisState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skillsync_industry_analysis');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const setAiIndustryAnalysis = (data) => {
+    setAiIndustryAnalysisState(data);
+    try {
+      if (data) {
+        localStorage.setItem('skillsync_industry_analysis', JSON.stringify(data));
+      } else {
+        localStorage.removeItem('skillsync_industry_analysis');
+      }
+    } catch (e) {}
+  };
+
+  const [aiTailoredResume, setAiTailoredResumeState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skillsync_ai_tailored_resume');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const setAiTailoredResume = (res) => {
+    setAiTailoredResumeState(res);
+    try {
+      if (res) {
+        localStorage.setItem('skillsync_ai_tailored_resume', JSON.stringify(res));
+      } else {
+        localStorage.removeItem('skillsync_ai_tailored_resume');
+      }
+    } catch (e) {}
+  };
+
   // --- ACTIONS & MUTATORS ---
 
   // Auth Handlers
@@ -332,8 +408,8 @@ export const AppProvider = ({ children }) => {
     setUserProfile(prev => {
       const updated = {
         ...prev,
-        email: email || prev.email || 'user@college.edu',
-        fullName: name !== undefined && name !== '' ? name : (prev.fullName || 'User')
+        email: email || prev.email || '',
+        fullName: typeof name === 'string' ? sanitizeFullName(name) : sanitizeFullName(prev.fullName)
       };
       try {
         localStorage.setItem('skillsync_user_profile', JSON.stringify(updated));
@@ -347,14 +423,15 @@ export const AppProvider = ({ children }) => {
     if (existingUser) {
       return { success: false, message: 'An account with this email already exists. Please Sign In.' };
     }
-    const newUser = { email, password, fullName };
+    const cleanName = sanitizeFullName(fullName) || fullName?.trim() || '';
+    const newUser = { email, password, fullName: cleanName };
     const updatedUsers = [...registeredUsers, newUser];
     setRegisteredUsers(updatedUsers);
     try {
       localStorage.setItem('skillsync_registered_users', JSON.stringify(updatedUsers));
     } catch (e) {}
 
-    login(email, password, fullName);
+    login(email, password, cleanName);
     return { success: true, message: 'Account created successfully!' };
   };
 
@@ -364,25 +441,25 @@ export const AppProvider = ({ children }) => {
       if (user.password !== password && password !== 'demo') {
         return { success: false, message: 'Incorrect password. Please try again.' };
       }
-      login(user.email, user.password, user.fullName);
+      login(user.email, user.password, user.fullName || '');
       return { success: true, message: 'Logged in successfully!' };
     }
     
-    const autoName = email.split('@')[0];
-    const formattedName = autoName.charAt(0).toUpperCase() + autoName.slice(1);
-    const newUser = { email, password, fullName: formattedName };
-    const updatedUsers = [...registeredUsers, newUser];
-    setRegisteredUsers(updatedUsers);
-    try {
-      localStorage.setItem('skillsync_registered_users', JSON.stringify(updatedUsers));
-    } catch (e) {}
-
-    login(email, password, formattedName);
+    login(email, password, '');
     return { success: true, message: 'Logged in successfully!' };
   };
 
   const logout = () => {
     setIsAuthenticated(false);
+    setUserProfileState({
+      fullName: '',
+      email: '',
+      phone: '',
+      educationLevel: 'Undergraduate Senior',
+      targetIndustry: 'Software & Technology',
+      preferredWorkType: 'Full-time / Remote',
+      notifications: true
+    });
     try {
       localStorage.removeItem('skillsync_auth');
       localStorage.removeItem('skillsync_user_profile');
@@ -707,7 +784,97 @@ export const AppProvider = ({ children }) => {
     setScoreHistory(prev => [newVersion, ...prev]);
   };
 
-  // 5. Submit Career Discovery Questionnaire (Powered by Gemini AI)
+  // 5a. Start Industry Questionnaire (Dynamic AI generation for any industry)
+  const handleStartIndustryQuestionnaire = async (industryName, isCustom = false, navigate = null) => {
+    const cleanName = (industryName || 'Software & Technology').trim();
+    setSelectedIndustry(cleanName);
+    setUserProfile(prev => ({ ...prev, targetIndustry: cleanName }));
+
+    // Check if we have pre-defined questionnaire bank
+    const lower = cleanName.toLowerCase();
+    let matchedKey = null;
+    if (lower.includes('software') || lower.includes('tech') || lower.includes('dev')) matchedKey = 'tech';
+    else if (lower.includes('lit') || lower.includes('pub') || lower.includes('write')) matchedKey = 'literature';
+    else if (lower.includes('bus') || lower.includes('mark') || lower.includes('growth')) matchedKey = 'business';
+    else if (lower.includes('health') || lower.includes('medic') || lower.includes('clinic')) matchedKey = 'healthcare';
+    else if (lower.includes('finan') || lower.includes('bank') || lower.includes('invest')) matchedKey = 'finance';
+    else if (lower.includes('design') || lower.includes('ui') || lower.includes('ux') || lower.includes('creat')) matchedKey = 'design';
+
+    if (matchedKey && !isCustom && FIELD_QUESTIONNAIRES[matchedKey]) {
+      setActiveDynamicQuestionnaire(FIELD_QUESTIONNAIRES[matchedKey]);
+      if (navigate) {
+        navigate('/career-discovery/questionnaire');
+      }
+      return;
+    }
+
+    // Dynamic AI Generation for Custom or Other Industry
+    setIsGeneratingQuestionnaire(true);
+    try {
+      const aiData = await generateDynamicIndustryQuestionnaireWithGemini(cleanName);
+      if (aiData?.questions && aiData.questions.length > 0) {
+        setActiveDynamicQuestionnaire(aiData.questions);
+      } else {
+        setActiveDynamicQuestionnaire(FIELD_QUESTIONNAIRES.tech);
+      }
+    } catch (err) {
+      console.warn('Error generating dynamic industry questionnaire:', err);
+      setActiveDynamicQuestionnaire(FIELD_QUESTIONNAIRES.tech);
+    } finally {
+      setIsGeneratingQuestionnaire(false);
+      if (navigate) {
+        navigate('/career-discovery/questionnaire');
+      }
+    }
+  };
+
+  // 5b. Complete Industry Questionnaire: AI Analyzes Answers, Prepares Resume & Suggests Roles
+  const handleCompleteIndustryQuestionnaire = async (industryName, answers, navigate = null) => {
+    const cleanName = (industryName || selectedIndustry || 'Software & Technology').trim();
+    setQuestionnaireAnswers(answers);
+    setIsAnalyzingIndustry(true);
+
+    try {
+      const result = await analyzeIndustryAndBuildResumeWithGemini(
+        cleanName,
+        answers,
+        userProfile,
+        activeResumeData
+      );
+
+      if (result) {
+        if (result.analysis) {
+          setAiIndustryAnalysis(result.analysis);
+        }
+
+        if (result.suggestedRoles && result.suggestedRoles.length > 0) {
+          setRecommendedRoles(result.suggestedRoles);
+          setTargetRole(result.suggestedRoles[0]);
+        }
+
+        if (result.resume) {
+          setAiTailoredResume(result.resume);
+          setResumeData(result.resume);
+          setUploadedFileName(result.resume.fileName || `${cleanName.replace(/[^a-zA-Z0-9]/g, '_')}_AI_Prepared_Resume.pdf`);
+          setUploadedFileSize(result.resume.fileSize || '254 KB');
+          setHasAnalyzedResume(true);
+
+          // Recalculate evaluation score against top recommended role
+          const primaryRole = result.suggestedRoles?.[0] || targetRole;
+          setAnalysis(prev => computeResumeAnalysis(result.resume, primaryRole, prev));
+        }
+      }
+    } catch (err) {
+      console.error('Error in AI industry analysis and resume preparation:', err);
+    } finally {
+      setIsAnalyzingIndustry(false);
+      if (navigate) {
+        navigate('/career-discovery/results');
+      }
+    }
+  };
+
+  // 5c. Submit Career Discovery Questionnaire (Powered by Gemini AI)
   const handleSubmitQuestionnaire = async (answers) => {
     setQuestionnaireAnswers(answers);
     try {
@@ -796,34 +963,45 @@ export const AppProvider = ({ children }) => {
       console.warn('Backend Gemini bridge unreachable:', backendErr);
     }
 
-    // Tier 3: Intelligent Dynamic Offline Mentor Response
+    // Tier 3: Intelligent Fallback Response (General Answer First + Role Perspective at the End)
     const lower = text.toLowerCase();
     let dynamicReply = "";
 
     if (lower.includes('bullet') || lower.includes('rewrite') || lower.includes('improve') || lower.includes('project')) {
-      dynamicReply = `Here are 2 high-impact, metric-driven bullet point examples tailored for a **${targetRole?.title || 'Software Engineer'}** position using the Google X-Y-Z formula:\n\n` +
-        `• **Engineered high-performance REST APIs** utilizing FastAPI and Redis caching, reducing p99 latency by 38% for 10,000+ daily requests.\n` +
-        `• **Architected scalable React interface with state management**, improving Lighthouse performance score from 68 to 94 and boosting user retention by 22%.\n\n` +
-        `*Tip: Always state the action verb, the quantifiable result, and the technical tooling used.*`;
+      dynamicReply = `### High-Impact Accomplishment Formulation\n\n` +
+        `Strong resume bullet points follow the Google X-Y-Z formula: *Accomplished [X] as measured by [Y], by doing [Z]*.\n\n` +
+        `• **Action Verb**: Begin with an active, powerful verb indicating direct leadership or implementation.\n` +
+        `• **Quantifiable Metric**: Always attach a benchmark, percentage boost, cost savings, or scale measure.\n` +
+        `• **Technical Stack**: Clearly specify the tools, libraries, or methodologies utilized.\n\n` +
+        `---\n` +
+        `### 💡 Perspective for ${targetRole?.title || 'Software Engineer'}\n` +
+        `• *Engineered high-performance REST APIs* utilizing FastAPI and Redis caching, reducing p99 latency by 38% for 10,000+ daily requests.\n` +
+        `• *Architected responsive interface with state management*, improving Lighthouse performance score from 68 to 94 and boosting user retention by 22%.`;
     } else if (lower.includes('interview') || lower.includes('question') || lower.includes('prep')) {
-      dynamicReply = `Here are key technical interview questions and strategies for **${targetRole?.title || 'Software Engineer'}**:\n\n` +
-        `1. **System Architecture**: "How do you handle asynchronous background processing and API rate limiting in production?"\n` +
-        `   *Winning approach*: Explain task queues (e.g. Celery / BullMQ), token bucket algorithms, and caching layers (Redis).\n\n` +
-        `2. **State & Performance**: "How do you minimize unnecessary re-renders in a complex React dashboard?"\n` +
-        `   *Winning approach*: Mention \`useMemo\`, \`useCallback\`, memoization, code splitting with dynamic imports, and proper context state structuring.\n\n` +
-        `Feel free to ask me to simulate a mock interview for any specific technical topic!`;
+      dynamicReply = `### Technical Interview Framework\n\n` +
+        `To excel in technical interviews across all engineering roles, structure your responses using the **STAR Method** (Situation, Task, Action, Result) or **CAR** (Context, Action, Result):\n\n` +
+        `1. **Clarify Constraints**: Confirm edge cases, load expectations, and input parameters before proposing an architecture.\n` +
+        `2. **Articulate Trade-offs**: Discuss time vs. space complexity, maintainability, and scalability.\n` +
+        `3. **Validate With Tests**: Explain how you verify correctness and handle failure modes.\n\n` +
+        `---\n` +
+        `### 💡 Perspective for ${targetRole?.title || 'Software Engineer'}\n` +
+        `For **${targetRole?.title || 'Software Engineer'}** interviews, prioritize questions on asynchronous task management, state synchronization, component re-render optimization, and resilient API contracts.`;
     } else if (lower.includes('score') || lower.includes('ats') || lower.includes('compatibility')) {
-      dynamicReply = `Your resume currently demonstrates **${analysis?.atsCompatibility || 84}% ATS compatibility** for **${targetRole?.title || 'your target role'}**.\n\n` +
-        `To reach a 95%+ score:\n` +
-        `1. Ensure standard single-column structure with standard section titles (*Experience*, *Education*, *Projects*, *Skills*).\n` +
-        `2. Incorporate missing keywords directly matching the job requirements.\n` +
-        `3. Quantify impact across every project bullet point with concrete metrics.`;
+      dynamicReply = `### Understanding ATS Scoring Algorithms\n\n` +
+        `Applicant Tracking Systems (ATS) scan and rank resumes using parsing heuristics and semantic relevance models:\n\n` +
+        `1. **Clean Formatting**: Use standard single-column layouts with standard headers (*Experience*, *Education*, *Projects*, *Skills*).\n` +
+        `2. **Semantic Matching**: Modern ATS models evaluate context rather than just literal keyword counts.\n` +
+        `3. **Outcome Metrics**: Quantifying your achievements significantly boosts human reviewer ratings after the ATS stage.\n\n` +
+        `---\n` +
+        `### 💡 Perspective for ${targetRole?.title || 'your target role'}\n` +
+        `Your resume currently demonstrates **${analysis?.atsCompatibility || 84}% ATS compatibility** for **${targetRole?.title || 'your target role'}**. Aligning keywords with the job description and quantifying your project bullets will elevate your score to 95%+.`;
     } else {
-      dynamicReply = `As your **AI Career Coach**, here is my tailored advice for your **${targetRole?.title || 'Software Engineering'}** career trajectory:\n\n` +
-        `• **Portfolio Impact**: Focus on building 2 full-stack, production-ready projects showcasing end-to-end architecture, automated testing, and CI/CD deployment.\n` +
-        `• **Skill Alignment**: Strengthen core competencies in ${Array.isArray(activeResumeData?.skills?.technical) ? activeResumeData.skills.technical.slice(0, 4).join(', ') : 'modern full-stack tools'}.\n` +
-        `• **Resume Crafting**: Ensure every bullet point clearly demonstrates the measurable business or technical value you delivered.\n\n` +
-        `What specific topic, technical question, or resume section would you like us to work on together?`;
+      dynamicReply = `### Overview & Core Concepts\n\n` +
+        `To address your question directly: **${text.trim()}** involves fundamental principles that apply widely across technology and engineering. ` +
+        `Key best practices emphasize clarity, modular architecture, verifying assumptions, and building testable workflows.\n\n` +
+        `---\n` +
+        `### 💡 Perspective for ${targetRole?.title || 'Software Engineer'}\n` +
+        `From the standpoint of a **${targetRole?.title || 'Software Engineer'}**, this topic directly impacts operational efficiency and system reliability. Applying these principles within your daily workflow reinforces strong technical judgment and stands out prominently on your resume and in interview discussions.`;
     }
 
     const aiMsg = {
@@ -890,6 +1068,18 @@ export const AppProvider = ({ children }) => {
         geminiApiKey,
         verifiedCertificate,
 
+        // Dynamic Industry & Questionnaire State
+        selectedIndustry,
+        setSelectedIndustry,
+        customIndustryName,
+        setCustomIndustryName,
+        activeDynamicQuestionnaire,
+        setActiveDynamicQuestionnaire,
+        isGeneratingQuestionnaire,
+        isAnalyzingIndustry,
+        aiIndustryAnalysis,
+        aiTailoredResume,
+
         // Auth
         login,
         logout,
@@ -907,6 +1097,8 @@ export const AppProvider = ({ children }) => {
         handleSelectJobRole,
         handleAcceptSuggestion,
         handleRunRecheck,
+        handleStartIndustryQuestionnaire,
+        handleCompleteIndustryQuestionnaire,
         handleSubmitQuestionnaire,
         handleSendChatMessage,
         handleClearChat,
