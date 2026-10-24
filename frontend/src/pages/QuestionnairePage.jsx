@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
 import ProgressBar from '../components/common/ProgressBar';
-import { useApp } from '../context/AppContext';
+import MandatoryProfileWarningModal from '../components/common/MandatoryProfileWarningModal';
+import { useApp, validateProfileForResumeCreation } from '../context/AppContext';
 import { FIELD_QUESTIONNAIRES } from '../data/mockData';
 import { Compass, ArrowRight, ArrowLeft, Check, Sparkles, Loader2, Target, CheckCircle2 } from 'lucide-react';
 
@@ -11,6 +12,7 @@ const QuestionnairePage = () => {
   const navigate = useNavigate();
   const {
     userProfile,
+    setUserProfile,
     selectedIndustry,
     activeDynamicQuestionnaire,
     handleCompleteIndustryQuestionnaire,
@@ -19,6 +21,8 @@ const QuestionnairePage = () => {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [isWarningModalOpen, setIsWarningModalOpen] = useState(false);
+  const [missingFieldsList, setMissingFieldsList] = useState([]);
 
   // Resolve questions bank: dynamic AI-generated questionnaire takes first priority
   const activeIndustryName = selectedIndustry || userProfile.targetIndustry || 'Software & Technology';
@@ -56,8 +60,21 @@ const QuestionnairePage = () => {
     if (currentStep < totalQuestions - 1) {
       setCurrentStep(prev => prev + 1);
     } else {
+      // Validate mandatory fields before synthesizing resume
+      const validation = validateProfileForResumeCreation(userProfile, activeIndustryName);
+      if (!validation.isValid) {
+        setMissingFieldsList(validation.missingFields);
+        setIsWarningModalOpen(true);
+        return;
+      }
       await handleCompleteIndustryQuestionnaire(activeIndustryName, answers, navigate);
     }
+  };
+
+  const handleModalSaveAndProceed = async (completedForm) => {
+    setIsWarningModalOpen(false);
+    setUserProfile(prev => ({ ...prev, ...completedForm }));
+    await handleCompleteIndustryQuestionnaire(completedForm.targetIndustry || activeIndustryName, answers, navigate);
   };
 
   const handleBack = () => {
@@ -142,25 +159,25 @@ const QuestionnairePage = () => {
                 <div
                   key={idx}
                   onClick={() => handleSelectOption(opt)}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between group ${
+                  className={`p-4.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between group ${
                     isSelected
-                      ? 'border-purple-600 bg-purple-50/60 shadow-xs'
-                      : 'border-slate-200 hover:border-purple-300 bg-slate-50/40 hover:bg-white'
+                      ? 'border-purple-600 bg-purple-50/70 shadow-xs'
+                      : 'border-slate-200 hover:border-purple-300 bg-slate-50/50 hover:bg-white'
                   }`}
                 >
-                  <div className="space-y-0.5">
-                    <span className={`text-xs font-bold ${isSelected ? 'text-purple-950' : 'text-slate-800'}`}>
+                  <div className="space-y-1">
+                    <span className={`text-sm sm:text-base font-bold ${isSelected ? 'text-purple-950' : 'text-slate-800'}`}>
                       {opt.label}
                     </span>
                     {opt.roleHint && (
-                      <span className="block text-[10px] text-purple-600 font-semibold">
+                      <span className="block text-xs text-purple-700 font-semibold">
                         Alignment: {opt.roleHint}
                       </span>
                     )}
                   </div>
                   {isSelected && (
-                    <div className="w-5 h-5 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0">
-                      <Check className="w-3.5 h-3.5" />
+                    <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0">
+                      <Check className="w-4 h-4" />
                     </div>
                   )}
                 </div>
@@ -173,7 +190,7 @@ const QuestionnairePage = () => {
             <button
               onClick={handleBack}
               disabled={currentStep === 0 || isAnalyzingIndustry}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-slate-600 border border-slate-200 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-700 border border-slate-200 hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
@@ -181,7 +198,7 @@ const QuestionnairePage = () => {
             <button
               onClick={handleNext}
               disabled={!answers[currentQ?.id] || isAnalyzingIndustry}
-              className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 disabled:opacity-40 text-white font-bold text-xs shadow-md shadow-purple-600/20 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 disabled:opacity-40 text-white font-bold text-sm shadow-md shadow-purple-600/20 transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
             >
               {currentStep === totalQuestions - 1 ? (
                 <>
@@ -196,6 +213,16 @@ const QuestionnairePage = () => {
             </button>
           </div>
         </div>
+
+        {/* Mandatory Profile Details Warning Modal */}
+        <MandatoryProfileWarningModal
+          isOpen={isWarningModalOpen}
+          onClose={() => setIsWarningModalOpen(false)}
+          missingFields={missingFieldsList}
+          userProfile={userProfile}
+          selectedIndustry={activeIndustryName}
+          onSaveAndProceed={handleModalSaveAndProceed}
+        />
       </div>
     </Sidebar>
   );

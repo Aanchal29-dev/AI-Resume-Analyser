@@ -10,6 +10,23 @@ const Navbar = () => {
   const location = useLocation();
   const { isAuthenticated, logout, userProfile } = useApp();
 
+  const handleLogoClick = (e) => {
+    setMobileMenuOpen(false);
+    if (location.pathname === '/') {
+      e.preventDefault();
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      if (document.documentElement) {
+        document.documentElement.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      }
+      if (document.body) {
+        document.body.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      }
+    } else {
+      navigate('/');
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    }
+  };
+
   const handleNavClick = (anchorId) => {
     setMobileMenuOpen(false);
     if (location.pathname !== '/') {
@@ -43,7 +60,7 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 bg-[#fbf7fd]/95 backdrop-blur-md border-b border-purple-200/80 shadow-xs font-sans text-stone-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo & Product Name - SkillSync */}
-        <Link to="/" className="flex items-center gap-2.5 group cursor-pointer">
+        <Link to="/" onClick={handleLogoClick} className="flex items-center gap-2.5 group cursor-pointer" title="Back to Top of SkillSync">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 via-purple-600 to-fuchsia-500 flex items-center justify-center text-white shadow-md shadow-purple-600/30 group-hover:shadow-purple-600/50 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 border border-purple-400/40">
             <Sparkles className="w-5 h-5 fill-white/20 text-white group-hover:rotate-12 transition-transform duration-300" />
           </div>

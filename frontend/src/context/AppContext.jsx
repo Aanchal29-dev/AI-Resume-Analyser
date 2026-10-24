@@ -85,6 +85,293 @@ export const computeResumeAnalysis = (resume, role, currentAnalysis = INITIAL_AN
   };
 };
 
+// Dynamic helper returning specialized roles for any industry domain
+export const getDefaultRolesForIndustry = (industryName) => {
+  const clean = (industryName || 'Software & Technology').trim().toLowerCase();
+
+  if (clean.includes('robot')) {
+    return [
+      {
+        id: 'robotics-systems-engineer',
+        title: 'Robotics Systems Engineer',
+        category: 'Robotics & Automation',
+        demand: 'Very High',
+        avgSalary: '₹16,00,000 - ₹30,00,000 (₹16 - ₹30 LPA)',
+        description: 'Design, simulate, and deploy autonomous robotic platforms, sensor architectures, and mechatronic control pipelines.',
+        requiredSkills: ['Robotics Systems', 'ROS (Robot Operating System)', 'Python', 'C++', 'Control Systems', 'Kinematics & Dynamics', 'Sensor Fusion'],
+        niceToHave: ['Gazebo', 'OpenCV', 'SLAM', 'Embedded Linux', 'PLC'],
+        responsibilities: [
+          'Develop robot control algorithms and motion planning pipelines in ROS.',
+          'Integrate multi-modal sensor suites (LiDAR, IMU, depth cameras).',
+          'Optimize robotic kinematics and simulation models for high physical reliability.'
+        ]
+      },
+      {
+        id: 'robotics-automation-specialist',
+        title: 'Automation & Mechatronics Specialist',
+        category: 'Robotics & Automation',
+        demand: 'High',
+        avgSalary: '₹12,00,000 - ₹22,00,000 (₹12 - ₹22 LPA)',
+        description: 'Build industrial automation cells, PLC architectures, and motor drive interfaces for continuous operations.',
+        requiredSkills: ['Process Optimization', 'PLC Programming', 'Automated Pipelines', 'Motor Controls', 'Quality Control', 'CAD Modeling'],
+        niceToHave: ['SolidWorks', 'SCADA', 'Industrial Robotics', 'Six Sigma'],
+        responsibilities: [
+          'Program industrial robots and automation controllers for continuous manufacturing.',
+          'Perform electrical and pneumatic schematics audits for automation hardware.',
+          'Implement preventative maintenance routines and diagnostic test suites.'
+        ]
+      },
+      {
+        id: 'robotics-perception-engineer',
+        title: 'Autonomous Systems & Perception Engineer',
+        category: 'Robotics & Automation',
+        demand: 'Very High',
+        avgSalary: '₹18,00,000 - ₹34,00,000 (₹18 - ₹34 LPA)',
+        description: 'Implement computer vision, SLAM, and deep perception algorithms for autonomous robotic navigation.',
+        requiredSkills: ['Computer Vision', 'Python', 'OpenCV', 'SLAM', 'Data Modeling', 'Deep Learning Basics', 'Point Cloud Processing'],
+        niceToHave: ['PyTorch', 'TensorRT', 'CUDA', 'Autonomous Driving Tech'],
+        responsibilities: [
+          'Architect 3D spatial perception pipelines using point clouds and vision data.',
+          'Optimize localization and mapping algorithms for unstructured physical environments.',
+          'Benchmark real-time perception models on edge computing platforms.'
+        ]
+      },
+      {
+        id: 'robotics-operations-consultant',
+        title: 'Robotics Operations & Integration Lead',
+        category: 'Robotics & Automation',
+        demand: 'High',
+        avgSalary: '₹14,00,000 - ₹25,00,000 (₹14 - ₹25 LPA)',
+        description: 'Oversee robotic deployment lifecycles, regulatory safety compliance, and system integration across facilities.',
+        requiredSkills: ['Systems Integration', 'Project Management', 'Quality Assurance', 'Process Optimization', 'Regulatory Governance', 'Technical Writing'],
+        niceToHave: ['ISO 10218 Compliance', 'Agile / Scrum', 'Jira', 'Risk Assessment'],
+        responsibilities: [
+          'Manage end-to-end robotic hardware and software deployment milestones.',
+          'Verify machinery adherence to international robotic safety regulations.',
+          'Lead technical root cause analyses for deployed robotic machinery.'
+        ]
+      }
+    ];
+  }
+
+  if (clean.includes('literature') || clean.includes('writing') || clean.includes('publish')) {
+    return SAMPLE_JOB_ROLES.filter(r => r.category.includes('Literature') || r.category.includes('Writing'));
+  }
+
+  if (clean.includes('health') || clean.includes('medical') || clean.includes('bio')) {
+    return [
+      SAMPLE_JOB_ROLES.find(r => r.id === 'health-informatics') || {
+        id: 'health-informatics',
+        title: 'Health Informatics & Clinical Data Specialist',
+        category: 'Healthcare & Life Sciences',
+        demand: 'High',
+        avgSalary: '₹11,00,000 - ₹20,00,000 (₹11 - ₹20 LPA)',
+        description: 'Bridge medical clinical workflows and electronic health record (EHR) technologies to optimize patient care and data security.',
+        requiredSkills: ['Health Data Management', 'EHR / EMR Systems', 'SQL', 'HIPAA Compliance', 'Clinical Workflow', 'Data Analysis'],
+        niceToHave: ['Python', 'HL7 / FHIR Standards', 'Biostatistics', 'Tableau'],
+        responsibilities: ['Analyze clinical data sets to optimize healthcare delivery outcomes.']
+      },
+      {
+        id: 'biomedical-systems-analyst',
+        title: 'Biomedical & Healthcare Systems Analyst',
+        category: 'Healthcare & Life Sciences',
+        demand: 'High',
+        avgSalary: '₹12,00,000 - ₹21,00,000 (₹12 - ₹21 LPA)',
+        description: 'Evaluate healthcare technology architectures and ensure medical compliance.',
+        requiredSkills: ['Clinical Data Management', 'Regulatory Governance', 'Systems Analysis', 'Process Optimization', 'Quality Assurance', 'SQL'],
+        niceToHave: ['Medical Imaging Tech', 'FDA Compliance', 'Python'],
+        responsibilities: ['Ensure strict HIPAA standards and evaluate clinical software performance.']
+      },
+      {
+        id: 'clinical-data-coordinator',
+        title: 'Clinical Data Operations Coordinator',
+        category: 'Healthcare & Life Sciences',
+        demand: 'Medium-High',
+        avgSalary: '₹9,00,000 - ₹16,00,000 (₹9 - ₹16 LPA)',
+        description: 'Maintain data integrity across clinical research trials and hospital informatics.',
+        requiredSkills: ['Data Validation', 'Clinical Protocols', 'Spreadsheet Modeling', 'Regulatory Documentation', 'Communication', 'Audit Trails'],
+        niceToHave: ['EDC Systems', 'GCP Guidelines', 'SAS Basics'],
+        responsibilities: ['Audit clinical trial documentation for accuracy and protocol compliance.']
+      }
+    ];
+  }
+
+  if (clean.includes('finance') || clean.includes('bank') || clean.includes('invest') || clean.includes('account')) {
+    return [
+      SAMPLE_JOB_ROLES.find(r => r.id === 'financial-analyst') || {
+        id: 'financial-analyst',
+        title: 'Financial & Quantitative Analyst',
+        category: 'Finance & Banking',
+        demand: 'High',
+        avgSalary: '₹12,00,000 - ₹24,00,000 (₹12 - ₹24 LPA)',
+        description: 'Evaluate financial performance, build quantitative risk models, and generate predictive investment projections.',
+        requiredSkills: ['Financial Modeling', 'Excel / VBA', 'SQL', 'Quantitative Risk Analysis', 'Financial Statement Analysis', 'Python'],
+        niceToHave: ['PowerBI', 'Tableau', 'Bloomberg Terminal', 'CFA / Series 7'],
+        responsibilities: ['Construct complex DCF, sensitivity, and scenario-based financial models.']
+      },
+      {
+        id: 'fintech-solutions-analyst',
+        title: 'FinTech Systems & Risk Analyst',
+        category: 'Finance & Banking',
+        demand: 'Very High',
+        avgSalary: '₹15,00,000 - ₹28,00,000 (₹15 - ₹28 LPA)',
+        description: 'Optimize digital payment gateways, fraud detection pipelines, and algorithmic trading architectures.',
+        requiredSkills: ['Risk Modeling', 'Python', 'SQL', 'Regulatory Compliance (SOX/AML)', 'REST APIs', 'Data Modeling'],
+        niceToHave: ['Machine Learning', 'Blockchain Basics', 'PowerBI'],
+        responsibilities: ['Analyze transaction logs to identify anomalous financial activity.']
+      }
+    ];
+  }
+
+  if (clean.includes('design') || clean.includes('creative') || clean.includes('media') || clean.includes('art')) {
+    return [
+      SAMPLE_JOB_ROLES.find(r => r.id === 'uiux-designer') || {
+        id: 'uiux-designer',
+        title: 'UI/UX & Product Experience Designer',
+        category: 'Design & Media',
+        demand: 'High',
+        avgSalary: '₹10,50,000 - ₹20,00,000 (₹10.5 - ₹20 LPA)',
+        description: 'Architect intuitive user journeys, wireframes, design systems, and responsive interactive prototypes for modern applications.',
+        requiredSkills: ['Figma', 'UI/UX Prototyping', 'User Research', 'Design Systems', 'Usability Testing', 'Information Architecture'],
+        niceToHave: ['HTML/CSS basics', 'Motion Design', 'Micro-interactions', 'WCAG Accessibility'],
+        responsibilities: ['Conduct qualitative user interviews to define target personas.']
+      },
+      {
+        id: 'design-systems-lead',
+        title: 'Design Systems & Component Architect',
+        category: 'Design & Media',
+        demand: 'High',
+        avgSalary: '₹14,00,000 - ₹26,00,000 (₹14 - ₹26 LPA)',
+        description: 'Build atomic design systems and reusable Figma component libraries for engineering teams.',
+        requiredSkills: ['Design Tokens', 'Figma Variables', 'Component Libraries', 'HTML5/CSS3', 'Accessibility (WCAG)', 'User Journey Mapping'],
+        niceToHave: ['Tailwind CSS', 'Storybook', 'Motion Design'],
+        responsibilities: ['Maintain unified multi-platform UI kits and tokens.']
+      }
+    ];
+  }
+
+  if (clean.includes('business') || clean.includes('market') || clean.includes('product')) {
+    return [
+      SAMPLE_JOB_ROLES.find(r => r.id === 'data-analyst') || {
+        id: 'data-analyst',
+        title: 'Data Analyst',
+        category: 'Data & Analytics',
+        demand: 'High',
+        avgSalary: '₹10,00,000 - ₹19,00,000 (₹10 - ₹19 LPA)',
+        description: 'Extract, clean, analyze, and visualize data to deliver actionable insights that drive business strategy.',
+        requiredSkills: ['Python', 'SQL', 'Pandas', 'Data Visualization', 'Tableau / PowerBI', 'Excel', 'Statistics'],
+        niceToHave: ['R', 'A/B Testing', 'BigQuery', 'Machine Learning Basics'],
+        responsibilities: ['Query relational databases to generate performance reports.']
+      },
+      {
+        id: 'product-growth-manager',
+        title: 'Product Growth & Operations Strategist',
+        category: 'Business & Marketing',
+        demand: 'High',
+        avgSalary: '₹13,00,000 - ₹24,00,000 (₹13 - ₹24 LPA)',
+        description: 'Identify product conversion bottlenecks and launch growth experiments.',
+        requiredSkills: ['A/B Testing', 'Data Analytics', 'User Acquisition', 'Conversion Funnel Optimization', 'Agile / Scrum', 'SQL'],
+        niceToHave: ['Google Analytics 4', 'Mixpanel', 'Figma'],
+        responsibilities: ['Design and monitor quantitative growth experiments.']
+      }
+    ];
+  }
+
+  // Fallback for custom or software
+  const genericClean = industryName ? industryName.trim() : 'Software & Technology';
+  if (genericClean.toLowerCase().includes('software') || genericClean.toLowerCase().includes('tech')) {
+    return [
+      SAMPLE_JOB_ROLES.find(r => r.id === 'frontend-dev') || SAMPLE_JOB_ROLES[0],
+      SAMPLE_JOB_ROLES.find(r => r.id === 'fullstack-dev') || SAMPLE_JOB_ROLES[4],
+      SAMPLE_JOB_ROLES.find(r => r.id === 'data-analyst') || SAMPLE_JOB_ROLES[5],
+      SAMPLE_JOB_ROLES.find(r => r.id === 'uiux-designer') || SAMPLE_JOB_ROLES[8]
+    ].filter(Boolean);
+  }
+
+  // Custom dynamically tailored roles
+  const safeId = genericClean.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+  return [
+    {
+      id: `${safeId}-specialist`,
+      title: `${genericClean} Systems Specialist`,
+      category: genericClean,
+      demand: 'Very High',
+      avgSalary: '₹14,00,000 - ₹26,00,000 (₹14 - ₹26 LPA)',
+      description: `Lead specialized technical and operational initiatives within ${genericClean}, architecting scalable systems.`,
+      requiredSkills: [`${genericClean} Systems`, 'Process Optimization', 'Python', 'SQL', 'Automated Pipelines', 'Quality Control'],
+      niceToHave: ['Regulatory Governance', 'Cloud Integration', 'Agile Leadership'],
+      responsibilities: [
+        `Architect and optimize ${genericClean} technical pipelines.`,
+        `Resolve operational bottlenecks with quantitative methodologies.`,
+        `Implement quality assurance and validation protocols.`
+      ]
+    },
+    {
+      id: `${safeId}-analyst`,
+      title: `${genericClean} Quantitative Analyst`,
+      category: genericClean,
+      demand: 'High',
+      avgSalary: '₹12,00,000 - ₹22,00,000 (₹12 - ₹22 LPA)',
+      description: `Analyze multi-dimensional ${genericClean} performance data to drive strategic decisions.`,
+      requiredSkills: ['Data Modeling', 'Statistical Analysis', 'SQL', 'Tableau / PowerBI', 'Python (Pandas)', 'Executive Reporting'],
+      niceToHave: ['A/B Testing', 'Predictive Modeling', 'Machine Learning Basics'],
+      responsibilities: [
+        `Deliver real-time metric dashboards for ${genericClean} stakeholders.`,
+        `Build forecasting models to identify efficiency gains.`
+      ]
+    },
+    {
+      id: `${safeId}-operations`,
+      title: `${genericClean} Operations Consultant`,
+      category: genericClean,
+      demand: 'High',
+      avgSalary: '₹11,00,000 - ₹20,00,000 (₹11 - ₹20 LPA)',
+      description: `Streamline project lifecycles, coordinate team initiatives, and manage governance protocols.`,
+      requiredSkills: ['Project Management', 'Agile / Scrum', 'Risk Mitigation', 'Cross-functional Collaboration', 'Process Auditing'],
+      niceToHave: ['Jira', 'PMP Certification', 'Change Management'],
+      responsibilities: [
+        `Oversee delivery milestones across ${genericClean} programs.`,
+        `Ensure strict compliance with industry operating standards.`
+      ]
+    }
+  ];
+};
+
+// Helper to validate mandatory profile fields before resume creation
+export const validateProfileForResumeCreation = (profile, industry) => {
+  const missing = [];
+  const rawName = (profile?.fullName || '').trim();
+  const isGeneric = ['student', 'user', 'demo user', 'demo', 'candidate', 'alex morgan'].includes(rawName.toLowerCase());
+  if (!rawName || isGeneric) {
+    missing.push({ key: 'fullName', label: 'Full Name' });
+  }
+
+  const email = (profile?.email || '').trim();
+  if (!email || !email.includes('@')) {
+    missing.push({ key: 'email', label: 'Email Address' });
+  }
+
+  const phone = (profile?.phone || '').trim();
+  if (!phone || phone.length < 5) {
+    missing.push({ key: 'phone', label: 'Phone Number' });
+  }
+
+  const field = (industry || profile?.targetIndustry || '').trim();
+  if (!field || field === 'Others') {
+    missing.push({ key: 'targetIndustry', label: 'Target Industry / Field' });
+  }
+
+  const education = (profile?.educationLevel || '').trim();
+  if (!education) {
+    missing.push({ key: 'educationLevel', label: 'Education Level' });
+  }
+
+  return {
+    isValid: missing.length === 0,
+    missingFields: missing
+  };
+};
+
 export const parseResumeText = (text) => {
   const COMMON_SKILLS = [
     'React', 'JavaScript', 'TypeScript', 'Node.js', 'Python', 'Java', 'C++', 'C#',
@@ -156,9 +443,11 @@ export const AppProvider = ({ children }) => {
 
   const [hasAnalyzedResume, setHasAnalyzedResumeState] = useState(() => {
     try {
-      return localStorage.getItem('skillsync_has_analyzed') === 'true';
+      const saved = localStorage.getItem('skillsync_has_analyzed');
+      if (saved !== null) return saved === 'true';
+      return true;
     } catch (e) {
-      return false;
+      return true;
     }
   });
 
@@ -211,9 +500,9 @@ export const AppProvider = ({ children }) => {
 
   const [uploadedFileName, setUploadedFileNameState] = useState(() => {
     try {
-      return localStorage.getItem('skillsync_file_name') || '';
+      return localStorage.getItem('skillsync_file_name') || 'Aanchal_Sharma_Resume.pdf';
     } catch (e) {
-      return '';
+      return 'Aanchal_Sharma_Resume.pdf';
     }
   });
 
@@ -226,9 +515,9 @@ export const AppProvider = ({ children }) => {
 
   const [uploadedFileSize, setUploadedFileSizeState] = useState(() => {
     try {
-      return localStorage.getItem('skillsync_file_size') || '';
+      return localStorage.getItem('skillsync_file_size') || '245 KB';
     } catch (e) {
-      return '';
+      return '245 KB';
     }
   });
 
@@ -252,6 +541,7 @@ export const AppProvider = ({ children }) => {
     try {
       localStorage.setItem('skillsync_target_role', JSON.stringify(role));
     } catch (e) {}
+    setAnalysis(curr => computeResumeAnalysis(activeResumeData, role, curr));
   };
 
   const [customJobDescription, setCustomJobDescription] = useState('');
@@ -283,7 +573,38 @@ export const AppProvider = ({ children }) => {
 
   // Career Discovery State
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState({});
-  const [recommendedRoles, setRecommendedRoles] = useState(SAMPLE_JOB_ROLES.slice(0, 4));
+  const [recommendedRoles, setRecommendedRolesState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('skillsync_recommended_roles');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    try {
+      const ind = localStorage.getItem('skillsync_selected_industry');
+      if (ind && ind !== 'Software & Technology') {
+        return getDefaultRolesForIndustry(ind);
+      }
+    } catch (e) {}
+    return SAMPLE_JOB_ROLES.slice(0, 4);
+  });
+
+  const setRecommendedRoles = (roles) => {
+    setRecommendedRolesState(roles);
+    try {
+      localStorage.setItem('skillsync_recommended_roles', JSON.stringify(roles));
+    } catch (e) {}
+  };
+
+  // Synchronize target role and recommended roles when industry is changed
+  const updateIndustryRoles = (industryName) => {
+    if (!industryName) return;
+    const cleanName = industryName.trim();
+    const newRoles = getDefaultRolesForIndustry(cleanName);
+    if (newRoles && newRoles.length > 0) {
+      setRecommendedRoles(newRoles);
+      setTargetRole(newRoles[0]);
+      setAnalysis(curr => computeResumeAnalysis(activeResumeData, newRoles[0], curr));
+    }
+  };
 
   // Learning Plan State
   const [learningPlan, setLearningPlan] = useState(MOCK_LEARNING_RESOURCES);
@@ -314,6 +635,9 @@ export const AppProvider = ({ children }) => {
       educationLevel: 'Undergraduate Senior',
       targetIndustry: 'Software & Technology',
       preferredWorkType: 'Full-time / Remote',
+      linkedin: '',
+      github: '',
+      portfolio: '',
       notifications: true
     };
     try {
@@ -1061,6 +1385,7 @@ export const AppProvider = ({ children }) => {
         recommendedRoles,
         learningPlan,
         chatMessages,
+        setChatMessages,
         isChatLoading,
         historyItems,
         userProfile,
@@ -1104,7 +1429,12 @@ export const AppProvider = ({ children }) => {
         handleClearChat,
         handleToggleResourceStatus,
         handleDeleteHistoryItem,
-        handleUpdateResumeData
+        handleUpdateResumeData,
+        setTargetRole,
+        setRecommendedRoles,
+        updateIndustryRoles,
+        getDefaultRolesForIndustry,
+        validateProfileForResumeCreation
       }}
     >
       {children}

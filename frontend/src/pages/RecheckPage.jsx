@@ -43,26 +43,26 @@ const RecheckPage = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold mb-2">
-              <Sparkles className="w-3.5 h-3.5" /> Recheck & Score Evolution Engine
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold mb-2 border border-emerald-300">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-700" /> Recheck & Score Evolution Engine
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Resume Score Evolution</h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              File: <span className="font-bold text-slate-800">{uploadedFileName}</span> | Track score improvements post AI optimization.
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">Resume Score Evolution</h1>
+            <p className="text-xs sm:text-sm text-stone-600 mt-1 font-medium">
+              File: <span className="font-extrabold text-purple-900">{uploadedFileName}</span> | Track score improvements post AI optimization.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={onRecheckAgain}
               disabled={isRechecking}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs shadow-xs"
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-purple-200 bg-white hover:bg-purple-50 text-stone-800 font-bold text-xs shadow-xs transition-colors cursor-pointer"
             >
-              <RefreshCw className={`w-4 h-4 ${isRechecking ? 'animate-spin' : ''}`} /> Re-evaluate Score
+              <RefreshCw className={`w-4 h-4 text-purple-600 ${isRechecking ? 'animate-spin' : ''}`} /> Re-evaluate Score
             </button>
             <button
               onClick={() => navigate('/recommendations')}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all"
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-md shadow-purple-600/25 transition-all cursor-pointer hover:scale-105 active:scale-95"
             >
               View Career Recommendations <ArrowRight className="w-4 h-4" />
             </button>

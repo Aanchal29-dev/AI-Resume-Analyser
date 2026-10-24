@@ -533,7 +533,7 @@ Respond strictly in valid JSON format matching this schema:
       "title": "Role Title",
       "category": "${cleanIndustry}",
       "demand": "High | Very High",
-      "avgSalary": "$85,000 - $125,000",
+      "avgSalary": "₹14,00,000 - ₹24,00,000 (₹14 - ₹24 LPA)",
       "matchPercentage": 92,
       "description": "2 sentence description of the role...",
       "whyFit": "Why the candidate's answers indicate strong fit...",
@@ -552,9 +552,9 @@ Respond strictly in valid JSON format matching this schema:
       "email": "${candidateEmail}",
       "phone": "${candidatePhone}",
       "location": "${candidateLocation}",
-      "linkedin": "linkedin.com/in/${candidateName.toLowerCase().replace(/\\s+/g, '-')}",
-      "github": "github.com/${candidateName.toLowerCase().replace(/\\s+/g, '')}",
-      "portfolio": "${candidateName.toLowerCase().replace(/\\s+/g, '')}-portfolio.dev"
+      "linkedin": "${userProfile?.linkedin?.trim() || ''}",
+      "github": "${userProfile?.github?.trim() || ''}",
+      "portfolio": "${userProfile?.portfolio?.trim() || ''}"
     },
     "summary": "High-impact summary tailored to ${cleanIndustry}...",
     "education": [
@@ -675,7 +675,7 @@ Respond strictly in valid JSON format matching this schema:
         title: role1Title,
         category: cleanIndustry,
         demand: 'Very High',
-        avgSalary: '$88,000 - $128,000',
+        avgSalary: '₹14,00,000 - ₹26,00,000 (₹14 - ₹26 LPA)',
         matchPercentage: 94,
         description: `Lead specialized technical and operational initiatives within ${cleanIndustry}, architecting scalable systems and ensuring high operational fidelity.`,
         whyFit: `Your assessment answers highlight strong affinity for core domain architecture, technical execution, and systematic problem solving in ${cleanIndustry}.`,
@@ -692,7 +692,7 @@ Respond strictly in valid JSON format matching this schema:
         title: role2Title,
         category: cleanIndustry,
         demand: 'High',
-        avgSalary: '$82,000 - $115,000',
+        avgSalary: '₹12,00,000 - ₹22,00,000 (₹12 - ₹22 LPA)',
         matchPercentage: 90,
         description: `Extract actionable strategic insights from ${cleanIndustry} datasets to drive process optimization, revenue growth, and risk minimization.`,
         whyFit: `Your analytical toolchain preferences and interest in quantitative problem solving match the daily demands of a ${role2Title}.`,
@@ -709,7 +709,7 @@ Respond strictly in valid JSON format matching this schema:
         title: role3Title,
         category: cleanIndustry,
         demand: 'High',
-        avgSalary: '$78,000 - $110,000',
+        avgSalary: '₹11,00,000 - ₹20,00,000 (₹11 - ₹20 LPA)',
         matchPercentage: 86,
         description: `Coordinate cross-disciplinary initiatives, streamline project delivery timelines, and ensure adherence to industry governance and safety protocols.`,
         whyFit: `Your responses demonstrated collaborative vision, clear communication, and interest in project-level execution.`,
@@ -732,9 +732,9 @@ Respond strictly in valid JSON format matching this schema:
         email: candidateEmail,
         phone: candidatePhone,
         location: candidateLocation,
-        linkedin: `linkedin.com/in/${candidateName.toLowerCase().replace(/\s+/g, '-')}`,
-        github: `github.com/${candidateName.toLowerCase().replace(/\s+/g, '')}`,
-        portfolio: `${candidateName.toLowerCase().replace(/\s+/g, '')}-portfolio.dev`
+        linkedin: userProfile?.linkedin?.trim() || '',
+        github: userProfile?.github?.trim() || '',
+        portfolio: userProfile?.portfolio?.trim() || ''
       },
       summary: `Proactive and results-driven professional specialized in ${cleanIndustry}, combining strong analytical capabilities with hands-on systems expertise. Proven track record in streamlining operational workflows, implementing high-impact solutions, and leveraging data-driven methodologies to drive measurable outcomes.`,
       education: [

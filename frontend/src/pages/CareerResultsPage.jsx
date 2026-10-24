@@ -1,9 +1,9 @@
 // src/pages/CareerResultsPage.jsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/common/Sidebar';
 import ResumePreview from '../components/common/ResumePreview';
-import { useApp } from '../context/AppContext';
+import { useApp, getDefaultRolesForIndustry } from '../context/AppContext';
 import {
   Compass,
   Sparkles,
@@ -13,17 +13,19 @@ import {
   BookOpen,
   Star,
   FileText,
-  DollarSign,
   TrendingUp,
   Download,
   Check,
   Briefcase,
   Layers,
-  ArrowUpRight
+  ArrowUpRight,
+  IndianRupee
 } from 'lucide-react';
 
 const CareerResultsPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
   const {
     userProfile,
     selectedIndustry,
@@ -35,7 +37,13 @@ const CareerResultsPage = () => {
     resumeData
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState('roles'); // 'roles' | 'resume' | 'roadmap'
+  const [activeTab, setActiveTab] = useState(requestedTab || 'roles'); // 'roles' | 'resume' | 'roadmap'
+
+  useEffect(() => {
+    if (requestedTab) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
   const activeIndustryName = selectedIndustry || userProfile.targetIndustry || 'Software & Technology';
 
   // Active resume to preview: prioritize aiTailoredResume, otherwise active resumeData
@@ -43,7 +51,7 @@ const CareerResultsPage = () => {
 
   const rolesToDisplay = (recommendedRoles && recommendedRoles.length > 0)
     ? recommendedRoles
-    : [];
+    : getDefaultRolesForIndustry(activeIndustryName);
 
   return (
     <Sidebar>
@@ -81,7 +89,7 @@ const CareerResultsPage = () => {
         </div>
 
         {/* Studio View Navigation Tabs */}
-        <div className="flex items-center gap-2 border-b border-purple-200/80 pb-3">
+        <div className="flex items-center gap-2 border-b border-purple-200/80 pb-3 flex-wrap">
           <button
             onClick={() => setActiveTab('roles')}
             className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
@@ -90,7 +98,7 @@ const CareerResultsPage = () => {
                 : 'bg-white hover:bg-purple-50 text-stone-700 border border-purple-200/70'
             }`}
           >
-            <Briefcase className="w-4 h-4" /> Suggested Job Roles ({rolesToDisplay.length})
+            <Briefcase className="w-4 h-4" /> See Matching Job Roles ({rolesToDisplay.length})
           </button>
 
           <button
@@ -116,95 +124,122 @@ const CareerResultsPage = () => {
               <TrendingUp className="w-4 h-4" /> Industry Strategy & Roadmap
             </button>
           )}
+
+          <button
+            onClick={() => navigate('/job-matcher')}
+            className="ml-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            title="Browse all active job vacancies in Job Matcher"
+          >
+            <Briefcase className="w-4 h-4 text-purple-700" /> Apply to Open Jobs →
+          </button>
         </div>
 
         {/* TAB 1: Suggested Job Roles Grid */}
         {activeTab === 'roles' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {rolesToDisplay.map((role, idx) => {
-                const isTargetRole = targetRole?.id === role.id || targetRole?.title === role.title;
+            {rolesToDisplay.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 border border-purple-200 text-center space-y-3">
+                <Briefcase className="w-10 h-10 text-purple-400 mx-auto" />
+                <h3 className="font-extrabold text-stone-900 text-lg">No matching job roles found</h3>
+                <p className="text-xs text-stone-600">Explore our curated roles or customize your target industry in your profile.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {rolesToDisplay.map((role, idx) => {
+                  const isTargetRole = targetRole?.id === role.id || targetRole?.title === role.title;
 
-                return (
-                  <div
-                    key={role.id || idx}
-                    className={`bg-white rounded-2xl p-6 border transition-all duration-300 flex flex-col justify-between shadow-soft hover:shadow-xl hover:-translate-y-1 ${
-                      isTargetRole ? 'border-purple-600 ring-2 ring-purple-600/20' : 'border-purple-200/80 hover:border-purple-400'
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full border border-purple-200">
-                          {role.category || activeIndustryName}
-                        </span>
-                        <div className="flex items-center gap-1 text-xs font-bold text-emerald-600">
-                          <Star className="w-3.5 h-3.5 fill-emerald-500 text-emerald-500" />
-                          <span>{role.matchPercentage || (95 - idx * 4)}% Match</span>
+                  return (
+                    <div
+                      key={role.id || idx}
+                      className={`bg-white rounded-2xl p-6 border transition-all duration-300 flex flex-col justify-between shadow-soft hover:shadow-xl hover:-translate-y-1 ${
+                        isTargetRole ? 'border-purple-600 ring-2 ring-purple-600/20' : 'border-purple-200/80 hover:border-purple-400'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-100 px-3 py-1 rounded-full border border-purple-200">
+                            {role.category || activeIndustryName}
+                          </span>
+                          <div className="flex items-center gap-1.5 text-sm font-extrabold text-emerald-600">
+                            <Star className="w-4 h-4 fill-emerald-500 text-emerald-500" />
+                            <span>{role.matchPercentage || (95 - idx * 4)}% Match</span>
+                          </div>
                         </div>
-                      </div>
 
-                      <h3 className="font-extrabold text-stone-900 text-lg leading-tight">{role.title}</h3>
+                        <h3 className="font-extrabold text-stone-900 text-xl leading-tight">{role.title}</h3>
 
-                      {role.avgSalary && (
-                        <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 mt-1">
-                          <DollarSign className="w-3.5 h-3.5" /> {role.avgSalary} / yr
-                        </div>
-                      )}
-
-                      <p className="text-xs text-stone-600 mt-2.5 leading-relaxed">{role.description}</p>
-
-                      {role.whyFit && (
-                        <div className="mt-3 p-2.5 rounded-xl bg-purple-50/70 border border-purple-100 text-[11px] text-purple-900 leading-normal">
-                          <span className="font-bold">Why it fits you: </span>{role.whyFit}
-                        </div>
-                      )}
-
-                      <div className="mt-4 pt-3 border-t border-purple-100">
-                        <span className="text-[11px] font-bold text-stone-700 block mb-1.5">Required Skills:</span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {(role.requiredSkills || []).slice(0, 5).map((sk, skIdx) => (
-                            <span key={skIdx} className="bg-stone-100 text-stone-800 px-2 py-0.5 rounded text-[11px] font-medium border border-stone-200">
-                              {sk}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="pt-6 mt-6 border-t border-stone-100 flex flex-col gap-2">
-                      <button
-                        onClick={() => {
-                          handleSelectJobRole(role);
-                        }}
-                        className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                          isTargetRole
-                            ? 'bg-purple-100 text-purple-800 border border-purple-300'
-                            : 'bg-stone-100 hover:bg-purple-100 hover:text-purple-800 text-stone-800'
-                        }`}
-                      >
-                        {isTargetRole ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-purple-700" /> Active Target Role
-                          </>
-                        ) : (
-                          'Select as Target Role'
+                        {role.avgSalary && (
+                          <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 mt-1.5">
+                            <IndianRupee className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>{role.avgSalary.includes('₹') ? role.avgSalary : `₹${role.avgSalary}`}</span>
+                          </div>
                         )}
-                      </button>
 
-                      <button
-                        onClick={() => {
-                          handleSelectJobRole(role);
-                          navigate('/resume-builder');
-                        }}
-                        className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        Build Resume for Role <Hammer className="w-3.5 h-3.5" />
-                      </button>
+                        <p className="text-sm text-stone-600 mt-3 leading-relaxed">{role.description}</p>
+
+                        {role.whyFit && (
+                          <div className="mt-3.5 p-3 rounded-xl bg-purple-50/70 border border-purple-100 text-xs text-purple-900 leading-normal">
+                            <span className="font-bold">Why it fits you: </span>{role.whyFit}
+                          </div>
+                        )}
+
+                        <div className="mt-4 pt-3.5 border-t border-purple-100">
+                          <span className="text-xs font-bold text-stone-700 block mb-2">Required Skills:</span>
+                          <div className="flex flex-wrap gap-2">
+                            {(role.requiredSkills || []).slice(0, 5).map((sk, skIdx) => (
+                              <span key={skIdx} className="bg-stone-100 text-stone-800 px-2.5 py-1 rounded-lg text-xs font-semibold border border-stone-200">
+                                {sk}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-6 mt-6 border-t border-stone-100 flex flex-col gap-2.5">
+                        <button
+                          onClick={() => {
+                            handleSelectJobRole(role);
+                          }}
+                          className={`w-full py-2.5 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                            isTargetRole
+                              ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                              : 'bg-stone-100 hover:bg-purple-100 hover:text-purple-800 text-stone-800'
+                          }`}
+                        >
+                          {isTargetRole ? (
+                            <>
+                              <Check className="w-4 h-4 text-purple-700" /> Active Target Role
+                            </>
+                          ) : (
+                            'Select as Target Role'
+                          )}
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            handleSelectJobRole(role);
+                            navigate('/resume-builder');
+                          }}
+                          className="w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white font-bold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          Build Resume for Role <Hammer className="w-4 h-4" />
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            handleSelectJobRole(role);
+                            navigate('/job-matcher');
+                          }}
+                          className="w-full py-2 rounded-xl border border-purple-200 hover:bg-purple-50 text-purple-800 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                        >
+                          <Briefcase className="w-3.5 h-3.5" /> View Openings in Job Matcher
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -221,12 +256,18 @@ const CareerResultsPage = () => {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                <button
+                  onClick={() => setActiveTab('roles')}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white font-bold text-xs shadow-md shadow-purple-600/25 flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all"
+                >
+                  <Briefcase className="w-3.5 h-3.5" /> See Matching Job Roles ({rolesToDisplay.length})
+                </button>
                 <button
                   onClick={() => navigate('/resume-builder')}
-                  className="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 border border-purple-300 font-bold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Hammer className="w-3.5 h-3.5" /> Edit in Resume Builder
+                  <Hammer className="w-3.5 h-3.5 text-purple-700" /> Edit in Resume Builder
                 </button>
               </div>
             </div>

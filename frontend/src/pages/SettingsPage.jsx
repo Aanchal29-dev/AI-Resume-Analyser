@@ -20,30 +20,30 @@ const SettingsPage = () => {
     <Sidebar>
       <div className="max-w-4xl mx-auto space-y-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">System Settings & AI API Integration</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Configure live Gemini API keys for resume deep-parsing, ATS compatibility auditing, and AI career recommendations.
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">System Settings & AI API Integration</h1>
+          <p className="text-xs sm:text-sm text-stone-600 mt-1 font-medium">
+            Configure live AI Engine API keys for resume deep-parsing, ATS compatibility auditing, and AI career recommendations.
           </p>
         </div>
 
         {/* AI System Status */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-soft space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white rounded-2xl p-6 border border-purple-200/90 shadow-soft space-y-4">
+          <div className="flex items-center justify-between border-b border-purple-100 pb-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+              <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 text-sm">AI Engine Status</h3>
-                <p className="text-xs text-slate-500">Autonomous career intelligence and multimodal resume evaluation engine</p>
+                <h3 className="font-extrabold text-stone-900 text-sm">AI Engine Status</h3>
+                <p className="text-xs text-stone-600 font-medium">Autonomous career intelligence and multimodal resume evaluation engine</p>
               </div>
             </div>
 
-            <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="text-[11px] font-extrabold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
               ● System Active
             </span>
           </div>
-          <p className="text-xs text-slate-600 leading-relaxed">
+          <p className="text-xs text-stone-700 leading-relaxed font-medium">
             All AI capabilities (Resume Analysis, ATS Compatibility Engine, Multimodal Certificate Verifier, Bullet Optimizer, and AI Coach) are running seamlessly via environment configurations (.env).
           </p>
         </div>
@@ -105,7 +105,7 @@ const SettingsPage = () => {
 
             <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-1">
               <div className="font-bold text-indigo-700">AI Intelligence Layer</div>
-              <div className="text-slate-800 font-semibold">Google Gemini API</div>
+              <div className="text-slate-800 font-semibold">SkillSync AI Engine</div>
               <p className="text-slate-500 text-[11px]">Generative bullet optimization, career questionnaire, and chat.</p>
             </div>
           </div>

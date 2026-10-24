@@ -1,6 +1,15 @@
 @import "tailwindcss";
 
 @layer base {
+  /* Prevent blinking cursor on non-editable elements across the project */
+  * {
+    caret-color: transparent !important;
+  }
+
+  input, textarea, [contenteditable="true"], input *, textarea * {
+    caret-color: #7c3aed !important;
+  }
+
   :root {
     --bg-main: #f8f5fc;
     --card-main: #fbf7fd;

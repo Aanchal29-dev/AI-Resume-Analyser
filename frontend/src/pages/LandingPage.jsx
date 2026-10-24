@@ -81,8 +81,8 @@ const LandingPage = () => {
     trendingTheme: 'AI Screening & ATS Optimization',
     faqs: [
       {
-        q: "How does SkillSync's Gemini AI analyze resumes differently from standard keyword checkers?",
-        a: "Unlike traditional keyword-counting tools, SkillSync uses Google Gemini to semantically evaluate context, quantified impact (Google X-Y-Z formula), section completeness, and genuine alignment against target job descriptions.",
+        q: "How does SkillSync's AI analyze resumes differently from standard keyword checkers?",
+        a: "Unlike traditional keyword-counting tools, SkillSync uses advanced semantic AI to evaluate context, quantified impact (Google X-Y-Z formula), section completeness, and genuine alignment against target job descriptions.",
         category: "ATS Optimization",
         trendingScore: "Top Question"
       },
@@ -94,13 +94,13 @@ const LandingPage = () => {
       },
       {
         q: "How often are the resume suggestions and industry trends updated?",
-        a: "The AI analysis model and FAQ trends are updated daily via Google Gemini to reflect current tech industry hiring demands and algorithm changes.",
+        a: "The AI analysis model and FAQ trends are updated daily via SkillSync's intelligence engine to reflect current tech industry hiring demands and algorithm changes.",
         category: "Industry Trends",
         trendingScore: "Daily Update"
       },
       {
         q: "What should I do if I am a fresher with no previous work experience?",
-        a: "Use our 'Discover My Career Path' questionnaire. Gemini AI maps your academic coursework, projects, and strengths to high-demand roles, generating tailored resume bullets from scratch.",
+        a: "Use our 'Discover My Career Path' questionnaire. SkillSync AI maps your academic coursework, projects, and strengths to high-demand roles, generating tailored resume bullets from scratch.",
         category: "Career Strategy",
         trendingScore: "Student Favorite"
       },
@@ -175,13 +175,17 @@ const LandingPage = () => {
   };
 
   const handleNextFaqSet = () => {
-    setFaqPageIndex((prev) => (prev + 1) % totalPages);
-    setOpenFaq(-1);
+    if (faqPageIndex < totalPages - 1) {
+      setFaqPageIndex((prev) => prev + 1);
+      setOpenFaq(-1);
+    }
   };
 
   const handlePrevFaqSet = () => {
-    setFaqPageIndex((prev) => (prev - 1 + totalPages) % totalPages);
-    setOpenFaq(-1);
+    if (faqPageIndex > 0) {
+      setFaqPageIndex((prev) => prev - 1);
+      setOpenFaq(-1);
+    }
   };
 
   const handleProtectedAction = (path) => {
@@ -241,7 +245,7 @@ const LandingPage = () => {
             </button>
 
             <button
-              onClick={() => handleProtectedAction('/career-discovery-intro')}
+              onClick={() => handleProtectedAction('/career-discovery')}
               className="w-full sm:w-auto px-9 py-4 rounded-2xl bg-white/95 hover:bg-purple-50 text-purple-950 font-extrabold text-sm border-2 border-purple-300/80 hover:border-purple-400 shadow-md transition-all flex items-center justify-center gap-2.5 hover:scale-105"
             >
               <Compass className="w-5 h-5 text-purple-600" /> Discover My Career Path
@@ -286,15 +290,15 @@ const LandingPage = () => {
                 <div
                   key={srv.id}
                   onClick={() => setSelectedService(srv)}
-                  className="group relative bg-[#fbf7fd] rounded-2xl p-6 border-2 border-purple-200/80 hover:border-purple-400 shadow-soft hover:shadow-lg transition-all cursor-pointer flex flex-col justify-between hover:-translate-y-1"
+                  className="group relative bg-gradient-to-b from-white/85 via-purple-100/40 to-purple-200/35 backdrop-blur-xl rounded-2xl p-6 border border-purple-300/80 hover:border-purple-500 shadow-md hover:shadow-xl hover:shadow-purple-500/15 transition-all cursor-pointer flex flex-col justify-between hover:-translate-y-1"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-xs">
+                      <div className="w-12 h-12 rounded-xl bg-purple-100/90 text-purple-700 border border-purple-300/60 flex items-center justify-center group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all shadow-xs">
                         <IconComponent className="w-6 h-6" />
                       </div>
                       {srv.badge && (
-                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-purple-100/90 text-purple-800 border border-purple-200">
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-purple-100/90 text-purple-800 border border-purple-200 shadow-2xs">
                           {srv.badge}
                         </span>
                       )}
@@ -303,12 +307,12 @@ const LandingPage = () => {
                     <h3 className="font-bold text-stone-900 text-base mb-2 group-hover:text-purple-700 transition-colors">
                       {srv.title}
                     </h3>
-                    <p className="text-xs text-stone-600 leading-relaxed">
+                    <p className="text-xs text-stone-600 leading-relaxed font-normal">
                       {srv.description}
                     </p>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-purple-200/60 flex items-center justify-between text-xs font-bold text-purple-600 group-hover:translate-x-1 transition-transform">
+                  <div className="mt-4 pt-3 border-t border-purple-200/80 flex items-center justify-between text-xs font-bold text-purple-700 group-hover:text-purple-900 group-hover:translate-x-1 transition-all">
                     <span>View Process & Details</span>
                     <ArrowRight className="w-4 h-4" />
                   </div>
@@ -390,7 +394,7 @@ const LandingPage = () => {
               <Upload className="w-4 h-4" /> Start Step 1: Upload Resume
             </button>
             <button
-              onClick={() => handleProtectedAction('/career-discovery-intro')}
+              onClick={() => handleProtectedAction('/career-discovery')}
               className="px-8 py-3.5 rounded-xl bg-white hover:bg-purple-50 text-purple-900 font-extrabold text-xs border border-purple-300 shadow-xs transition-all hover:scale-105 flex items-center gap-2"
             >
               <Compass className="w-4 h-4 text-purple-600" /> Or Start Career Quiz
@@ -409,11 +413,11 @@ const LandingPage = () => {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-xs font-bold mb-1 shadow-xs">
-              <Sparkles className="w-3.5 h-3.5" /> Powered by Google Gemini AI
+              <Sparkles className="w-3.5 h-3.5" /> Powered by SkillSync AI
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900">Frequently Asked Questions</h2>
             <p className="text-xs sm:text-sm text-stone-600">
-              Top 3 daily questions curated directly from live Google Gemini resume & career queries.
+              Top 3 daily questions curated directly from live SkillSync AI resume & career queries.
             </p>
 
             {/* Daily Sync & Rotation Status Bar */}
@@ -430,7 +434,7 @@ const LandingPage = () => {
                 onClick={handleManualFaqRefresh}
                 disabled={isRefreshingFaqs}
                 className="flex items-center gap-1 text-purple-600 hover:text-purple-800 font-bold hover:underline transition-all"
-                title="Refresh today's FAQs from Gemini AI"
+                title="Refresh today's FAQs from SkillSync AI"
               >
                 <RefreshCw className={`w-3 h-3 ${isRefreshingFaqs ? 'animate-spin' : ''}`} />
                 {isRefreshingFaqs ? 'Syncing...' : 'Sync Live'}
@@ -487,7 +491,8 @@ const LandingPage = () => {
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-purple-200/60 text-xs">
             <button
               onClick={handlePrevFaqSet}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-purple-200 bg-white hover:bg-purple-50 text-purple-700 font-bold shadow-xs transition-colors"
+              disabled={faqPageIndex === 0}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-purple-200 bg-white hover:bg-purple-50 text-purple-700 font-bold shadow-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
             >
               <ChevronLeft className="w-4 h-4" /> Previous
             </button>
@@ -508,7 +513,8 @@ const LandingPage = () => {
 
             <button
               onClick={handleNextFaqSet}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-purple-200 bg-white hover:bg-purple-50 text-purple-700 font-bold shadow-xs transition-colors"
+              disabled={faqPageIndex >= totalPages - 1}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-purple-200 bg-white hover:bg-purple-50 text-purple-700 font-bold shadow-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
             >
               Next <ChevronRight className="w-4 h-4" />
             </button>

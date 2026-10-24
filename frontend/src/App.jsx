@@ -65,6 +65,7 @@ function AppRoutes() {
 
         {/* Career Discovery Flow */}
         <Route path="/career-discovery" element={<ProtectedRoute><CareerDiscoveryIntroPage /></ProtectedRoute>} />
+        <Route path="/career-discovery-intro" element={<Navigate to="/career-discovery" replace />} />
         <Route path="/career-discovery/questionnaire" element={<ProtectedRoute><QuestionnairePage /></ProtectedRoute>} />
         <Route path="/career-discovery/results" element={<ProtectedRoute><CareerResultsPage /></ProtectedRoute>} />
         <Route path="/career-discovery/role/:id" element={<ProtectedRoute><RoleDetailsPage /></ProtectedRoute>} />

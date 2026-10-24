@@ -32,22 +32,22 @@ const ResumeServicesPage = () => {
             <div
               key={srv.id}
               onClick={() => setSelectedService(srv)}
-              className="bg-[#fbf7fd] hover:bg-purple-100/60 p-6 rounded-2xl border border-purple-200/80 shadow-soft hover:border-purple-500 hover:shadow-md cursor-pointer transition-all flex flex-col justify-between group"
+              className="bg-gradient-to-b from-white/85 via-purple-100/40 to-purple-200/35 backdrop-blur-xl p-6 rounded-2xl border border-purple-300/80 shadow-md hover:border-purple-500 hover:shadow-xl hover:shadow-purple-500/15 cursor-pointer transition-all flex flex-col justify-between group hover:-translate-y-1"
             >
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-purple-100/90 text-purple-700 border border-purple-300/60 flex items-center justify-center font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100/90 text-purple-700 border border-purple-300/60 flex items-center justify-center font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors shadow-xs">
                     <Sparkles className="w-5 h-5" />
                   </div>
-                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-purple-100/70 text-purple-800 border border-purple-200">
+                  <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-purple-100/90 text-purple-800 border border-purple-200 shadow-2xs">
                     {srv.badge}
                   </span>
                 </div>
                 <h3 className="font-bold text-stone-900 text-base group-hover:text-purple-700 transition-colors">{srv.title}</h3>
-                <p className="text-xs text-stone-500 mt-2 leading-relaxed">{srv.description}</p>
+                <p className="text-xs text-stone-600 mt-2 leading-relaxed font-normal">{srv.description}</p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-purple-200/60 flex items-center justify-between text-xs font-bold text-purple-600 group-hover:translate-x-1 transition-transform">
+              <div className="mt-4 pt-3 border-t border-purple-200/80 flex items-center justify-between text-xs font-bold text-purple-700 group-hover:text-purple-900 group-hover:translate-x-1 transition-all">
                 <span>View Process & Details</span>
                 <ArrowRight className="w-4 h-4" />
               </div>

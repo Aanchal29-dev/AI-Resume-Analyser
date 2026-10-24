@@ -6,7 +6,7 @@ import { useApp } from '../context/AppContext';
 import { SAMPLE_JOB_ROLES } from '../data/mockData';
 import {
   Briefcase,
-  DollarSign,
+  IndianRupee,
   TrendingUp,
   CheckCircle2,
   BookOpen,
@@ -58,13 +58,13 @@ const RoleDetailsPage = () => {
 
           {/* Quick Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-emerald-100 text-emerald-700 font-bold">
-                <DollarSign className="w-5 h-5" />
+            <div className="p-4 rounded-xl bg-purple-50/70 border border-purple-200/80 flex items-center gap-3">
+              <div className="p-2.5 rounded-lg bg-emerald-100 text-emerald-800 font-bold">
+                <IndianRupee className="w-5 h-5 text-emerald-700" />
               </div>
               <div>
-                <div className="text-[11px] text-slate-500 font-medium">Est. Entry Salary Range</div>
-                <div className="text-sm font-extrabold text-slate-900">{role.avgSalary}</div>
+                <div className="text-xs text-stone-600 font-semibold">Est. Salary Range</div>
+                <div className="text-sm font-extrabold text-stone-900">{role.avgSalary}</div>
               </div>
             </div>
 

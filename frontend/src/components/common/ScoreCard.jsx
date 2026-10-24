@@ -1,7 +1,7 @@
 // src/components/common/ScoreCard.jsx
 import React from 'react';
 
-const ScoreCard = ({ title, score, maxScore = 100, subtitle, status, color = 'purple', icon: Icon, size = 'md' }) => {
+const ScoreCard = ({ title, score, maxScore = 100, subtitle, status, color = 'purple', icon: Icon, size = 'md', onClick }) => {
   const percentage = Math.min(100, Math.max(0, Math.round((score / maxScore) * 100)));
   const circumference = 2 * Math.PI * 36;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
@@ -47,32 +47,37 @@ const ScoreCard = ({ title, score, maxScore = 100, subtitle, status, color = 'pu
   const theme = getColorClasses(color);
 
   return (
-    <div className="bg-[#fbf7fd] hover:bg-purple-50/60 rounded-2xl p-5 border-2 border-purple-200/80 hover:border-purple-500 shadow-soft shadow-card-hover transition-all duration-300 flex flex-col justify-between group">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center gap-2.5">
+    <div
+      onClick={onClick}
+      className={`bg-[#fbf7fd] hover:bg-purple-50/70 rounded-3xl p-6 border-2 border-purple-200/80 hover:border-purple-500 shadow-soft shadow-card-hover transition-all duration-300 flex flex-col justify-between group ${
+        onClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-lg' : ''
+      }`}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3">
           {Icon && (
-            <div className={`p-2 rounded-xl ${theme.bg} ${theme.text}`}>
+            <div className={`p-2.5 rounded-xl ${theme.bg} ${theme.text}`}>
               <Icon className="w-5 h-5" />
             </div>
           )}
           <div>
-            <h3 className="text-sm font-bold text-stone-800">{title}</h3>
-            {subtitle && <p className="text-xs text-stone-500 mt-0.5">{subtitle}</p>}
+            <h3 className="text-base font-extrabold text-stone-900 tracking-tight">{title}</h3>
+            {subtitle && <p className="text-sm text-stone-600 font-medium mt-0.5">{subtitle}</p>}
           </div>
         </div>
         {status && (
-          <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${theme.badge}`}>
+          <span className={`text-xs font-bold px-3 py-1 rounded-full border shadow-2xs ${theme.badge}`}>
             {status}
           </span>
         )}
       </div>
 
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex items-center justify-between mt-3">
         <div className="flex items-baseline gap-1">
-          <span className={`text-3xl font-extrabold tracking-tight ${theme.text}`}>
+          <span className={`text-3xl sm:text-4xl font-black tracking-tight ${theme.text}`}>
             {score}
           </span>
-          <span className="text-sm font-semibold text-stone-400">/{maxScore}</span>
+          <span className="text-base font-bold text-stone-400">/{maxScore}</span>
         </div>
 
         <div className="relative w-16 h-16 flex items-center justify-center">
@@ -97,11 +102,18 @@ const ScoreCard = ({ title, score, maxScore = 100, subtitle, status, color = 'pu
               fill="transparent"
             />
           </svg>
-          <span className="absolute text-xs font-bold text-stone-700">
+          <span className="absolute text-sm font-extrabold text-stone-800">
             {percentage}%
           </span>
         </div>
       </div>
+
+      {onClick && (
+        <div className="mt-4 pt-2.5 border-t border-purple-100 flex items-center justify-between text-xs font-bold text-purple-700 group-hover:text-purple-900 transition-all">
+          <span>Explore Detailed Breakdown</span>
+          <span className="text-purple-600 font-extrabold group-hover:translate-x-1 transition-transform">→</span>
+        </div>
+      )}
     </div>
   );
 };

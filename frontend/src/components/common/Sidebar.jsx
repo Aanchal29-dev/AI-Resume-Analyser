@@ -2,9 +2,9 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  FileCheck2,
-  Target,
+  LayoutGrid,
+  FileSearch,
+  Briefcase,
   Compass,
   Bot,
   Menu,
@@ -19,14 +19,19 @@ import { useApp } from '../../context/AppContext';
 const Sidebar = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const { userProfile, logout } = useApp();
+  const { userProfile, logout, uploadedFileName, hasAnalyzedResume } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
 
   const navItems = [
-    { name: 'Home Workspace', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Resume Analyzer', path: '/upload-resume', icon: FileCheck2 },
-    { name: 'Job Matcher', path: '/job-matcher', icon: Target },
+    { name: 'Home Workspace', path: '/dashboard', icon: LayoutGrid },
+    {
+      name: 'Resume Analyzer',
+      path: '/upload-resume',
+      icon: FileSearch,
+      matchPaths: ['/upload-resume', '/resume-overview', '/analysis', '/issues', '/recheck', '/corrections', '/choose-analysis']
+    },
+    { name: 'Job Matcher', path: '/job-matcher', icon: Briefcase },
     { name: 'Career Path', path: '/career-discovery', icon: Compass },
     { name: 'AI Assistant', path: '/ai-assistant', icon: Bot, badge: 'AI' }
   ];
@@ -37,7 +42,7 @@ const Sidebar = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f2fb] text-stone-900 flex flex-col md:flex-row font-sans selection:bg-purple-600 selection:text-white relative overflow-x-hidden">
+    <div className="h-screen w-full bg-[#f7f2fb] text-stone-900 flex flex-col md:flex-row font-sans selection:bg-purple-600 selection:text-white relative overflow-hidden">
       {/* Dynamic Animated Ambient Background Texture & Glowing Orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-28 -left-28 w-[32rem] h-[32rem] bg-purple-400/20 rounded-full blur-3xl animate-float-slow" />
@@ -52,13 +57,14 @@ const Sidebar = ({ children }) => {
           }}
         />
       </div>
+
       {/* Mobile Header Bar */}
-      <div className="md:hidden bg-[#fbf7fd] border-b border-purple-200/80 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      <div className="md:hidden bg-[#fbf7fd]/95 backdrop-blur-md border-b border-purple-200/80 px-4 py-3 flex items-center justify-between sticky top-0 z-30 shadow-xs shrink-0">
         <Link to="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-violet-600 flex items-center justify-center text-white border border-purple-400/40">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
-          <span className="font-extrabold text-base text-stone-900">SkillSync</span>
+          <span className="font-extrabold text-base text-purple-950">SkillSync</span>
         </Link>
         <button
           onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
@@ -68,56 +74,57 @@ const Sidebar = ({ children }) => {
         </button>
       </div>
 
-      {/* Desktop Sidebar / Mobile Drawer */}
+      {/* Desktop Sidebar / Mobile Drawer with subtle ambient glass effects */}
       <aside
-        className={`fixed md:sticky top-0 z-40 h-screen bg-[#fbf7fd] border-r border-purple-200/80 flex flex-col justify-between transition-all duration-300 shadow-xs ${
+        className={`fixed md:relative top-0 z-40 h-full bg-[#fcf9fe]/90 backdrop-blur-xl border-r border-purple-200/90 flex flex-col justify-between transition-all duration-300 shadow-[4px_0_24px_-4px_rgba(147,51,234,0.06)] shrink-0 ${
           collapsed ? 'w-20' : 'w-64'
         } ${
           mobileDrawerOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        {/* Top Brand Header - SkillSync AI */}
-        <div>
-          <div className="h-16 px-5 flex items-center justify-between border-b border-purple-100">
-            <Link to="/" className="flex items-center gap-3 overflow-hidden group">
+        {/* Top Brand Header - SkillSync */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+          <div className="h-16 px-5 flex items-center justify-between border-b border-purple-100 shrink-0">
+            <Link to="/" className="flex items-center gap-3 overflow-hidden group" title="Return to SkillSync Landing Page">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-violet-600 to-fuchsia-500 flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform border border-purple-400/30">
                 <Sparkles className="w-5 h-5" />
               </div>
               {!collapsed && (
-                <div>
-                  <span className="font-extrabold text-sm text-stone-900 tracking-tight block">SkillSync</span>
-                  <span className="text-[10px] text-purple-700 font-semibold block">Back to Landing Page</span>
-                </div>
+                <span className="font-black text-base text-purple-950 tracking-tight block group-hover:text-purple-700 transition-colors">
+                  SkillSync
+                </span>
               )}
             </Link>
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="hidden md:flex p-1.5 rounded-lg text-stone-400 hover:text-purple-700 hover:bg-purple-50"
+              className="hidden md:flex p-1.5 rounded-lg text-stone-400 hover:text-purple-700 hover:bg-purple-50 cursor-pointer"
             >
               {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
           </div>
 
-          {/* Clean Navigation Items */}
-          <nav className="p-3 space-y-1.5 mt-2">
+          {/* Clean Navigation Items with Rich Purple Text & Modern Symbols */}
+          <nav className="p-3 space-y-1.5 mt-2 flex-1">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+              const isActive = item.matchPaths
+                ? item.matchPaths.some(p => location.pathname === p || location.pathname.startsWith(p))
+                : (location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path)));
 
               return (
                 <NavLink
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileDrawerOpen(false)}
-                  className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-semibold transition-all ${
+                  className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-bold transition-all group ${
                     isActive
-                      ? 'bg-purple-50/90 text-purple-700 border border-purple-200/80 shadow-xs font-bold'
-                      : 'text-stone-600 hover:text-purple-700 hover:bg-purple-50/60'
+                      ? 'bg-purple-100/90 text-purple-950 border border-purple-300 shadow-xs'
+                      : 'text-purple-900 hover:text-purple-950 hover:bg-purple-50/80 border border-transparent'
                   }`}
                   title={collapsed ? item.name : undefined}
                 >
                   <div className="flex items-center gap-3.5">
-                    <Icon className={`w-4.5 h-4.5 shrink-0 ${isActive ? 'text-purple-700' : 'text-stone-400'}`} />
+                    <Icon className={`w-4.5 h-4.5 shrink-0 transition-colors ${isActive ? 'text-purple-700' : 'text-purple-600/70 group-hover:text-purple-800'}`} />
                     {!collapsed && <span className="text-xs tracking-wide">{item.name}</span>}
                   </div>
                   {!collapsed && item.badge && (
@@ -132,7 +139,7 @@ const Sidebar = ({ children }) => {
         </div>
 
         {/* Bottom User Profile & Sign Out Widget */}
-        <div className="p-3 border-t border-purple-100 space-y-1">
+        <div className="p-3 border-t border-purple-100 space-y-1 shrink-0">
           <div
             onClick={() => navigate('/profile')}
             className="flex items-center gap-3 p-2 rounded-xl bg-purple-50/70 border border-purple-200/60 hover:border-purple-300 hover:bg-purple-100/50 transition-colors cursor-pointer"
@@ -158,7 +165,7 @@ const Sidebar = ({ children }) => {
           {!collapsed && (
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" /> Sign Out
             </button>
@@ -167,7 +174,7 @@ const Sidebar = ({ children }) => {
       </aside>
 
       {/* Main Workspace Content with Dynamic Ambient Layering */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 min-w-0 overflow-y-auto relative z-10">
+      <main className="flex-1 h-full overflow-y-auto p-4 sm:p-6 lg:p-8 min-w-0 relative z-10">
         {children}
       </main>
     </div>
