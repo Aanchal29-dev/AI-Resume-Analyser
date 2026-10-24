@@ -42,17 +42,17 @@ const Sidebar = ({ children }) => {
   };
 
   return (
-    <div className="h-screen w-full bg-[#f7f2fb] text-stone-900 flex flex-col md:flex-row font-sans selection:bg-purple-600 selection:text-white relative overflow-hidden">
+    <div className="h-screen w-full bg-[#eee3f8] text-stone-900 flex flex-col md:flex-row font-sans selection:bg-purple-600 selection:text-white relative overflow-hidden">
       {/* Dynamic Animated Ambient Background Texture & Glowing Orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute -top-28 -left-28 w-[32rem] h-[32rem] bg-purple-400/20 rounded-full blur-3xl animate-float-slow" />
-        <div className="absolute top-1/4 -right-20 w-[28rem] h-[28rem] bg-fuchsia-400/18 rounded-full blur-3xl animate-float-reverse" />
-        <div className="absolute bottom-10 left-1/3 w-[30rem] h-[30rem] bg-violet-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute -top-28 -left-28 w-[34rem] h-[34rem] bg-purple-500/26 rounded-full blur-3xl animate-float-slow" />
+        <div className="absolute top-1/4 -right-20 w-[30rem] h-[30rem] bg-fuchsia-500/22 rounded-full blur-3xl animate-float-reverse" />
+        <div className="absolute bottom-10 left-1/3 w-[32rem] h-[32rem] bg-violet-500/26 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
         {/* Fine Micro-Dot Mesh Matrix Texture */}
         <div
-          className="absolute inset-0 opacity-60"
+          className="absolute inset-0 opacity-70"
           style={{
-            backgroundImage: 'radial-gradient(rgba(124, 58, 237, 0.09) 1.5px, transparent 1.5px)',
+            backgroundImage: 'radial-gradient(rgba(124, 58, 237, 0.12) 1.5px, transparent 1.5px)',
             backgroundSize: '24px 24px'
           }}
         />
@@ -74,12 +74,26 @@ const Sidebar = ({ children }) => {
         </button>
       </div>
 
+      {/* Floating Expand Trigger when Sidebar is entirely collapsed */}
+      {collapsed && (
+        <button
+          type="button"
+          onClick={() => setCollapsed(false)}
+          className="hidden md:flex items-center gap-1.5 fixed top-3 left-3 z-50 px-3.5 py-2 rounded-xl bg-white/95 backdrop-blur-md border border-purple-300 shadow-md hover:shadow-lg text-purple-800 hover:text-purple-950 hover:bg-purple-50 hover:border-purple-400 transition-all cursor-pointer hover:scale-105 active:scale-95 group"
+          title="Open Sidebar"
+        >
+          <Menu className="w-4 h-4 text-purple-700 group-hover:scale-110 transition-transform" />
+          <span className="text-xs font-bold text-purple-950">Sidebar</span>
+          <ChevronRight className="w-3.5 h-3.5 text-purple-500 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+      )}
+
       {/* Desktop Sidebar / Mobile Drawer with subtle ambient glass effects */}
       <aside
-        className={`fixed md:relative top-0 z-40 h-full bg-[#fcf9fe]/90 backdrop-blur-xl border-r border-purple-200/90 flex flex-col justify-between transition-all duration-300 shadow-[4px_0_24px_-4px_rgba(147,51,234,0.06)] shrink-0 ${
-          collapsed ? 'w-20' : 'w-64'
+        className={`fixed md:relative top-0 z-40 h-full bg-[#fcf9fe]/95 backdrop-blur-xl border-r border-purple-200/90 flex flex-col justify-between transition-all duration-300 shadow-[4px_0_24px_-4px_rgba(147,51,234,0.06)] shrink-0 overflow-hidden ${
+          collapsed ? 'w-0 border-r-0 opacity-0 pointer-events-none p-0' : 'w-64 opacity-100'
         } ${
-          mobileDrawerOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'
+          mobileDrawerOpen ? 'translate-x-0 w-64 opacity-100 pointer-events-auto' : '-translate-x-full md:translate-x-0'
         }`}
       >
         {/* Top Brand Header - SkillSync */}
@@ -89,17 +103,16 @@ const Sidebar = ({ children }) => {
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-violet-600 to-fuchsia-500 flex items-center justify-center text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform border border-purple-400/30">
                 <Sparkles className="w-5 h-5" />
               </div>
-              {!collapsed && (
-                <span className="font-black text-base text-purple-950 tracking-tight block group-hover:text-purple-700 transition-colors">
-                  SkillSync
-                </span>
-              )}
+              <span className="font-black text-base text-purple-950 tracking-tight block group-hover:text-purple-700 transition-colors">
+                SkillSync
+              </span>
             </Link>
             <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="hidden md:flex p-1.5 rounded-lg text-stone-400 hover:text-purple-700 hover:bg-purple-50 cursor-pointer"
+              onClick={() => setCollapsed(true)}
+              className="hidden md:flex p-1.5 rounded-lg text-stone-400 hover:text-purple-700 hover:bg-purple-50 cursor-pointer transition-colors"
+              title="Collapse Sidebar Entirely"
             >
-              {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              <ChevronLeft className="w-4 h-4" />
             </button>
           </div>
 
@@ -121,13 +134,13 @@ const Sidebar = ({ children }) => {
                       ? 'bg-purple-100/90 text-purple-950 border border-purple-300 shadow-xs'
                       : 'text-purple-900 hover:text-purple-950 hover:bg-purple-50/80 border border-transparent'
                   }`}
-                  title={collapsed ? item.name : undefined}
+                  title={item.name}
                 >
                   <div className="flex items-center gap-3.5">
                     <Icon className={`w-4.5 h-4.5 shrink-0 transition-colors ${isActive ? 'text-purple-700' : 'text-purple-600/70 group-hover:text-purple-800'}`} />
-                    {!collapsed && <span className="text-xs tracking-wide">{item.name}</span>}
+                    <span className="text-xs tracking-wide">{item.name}</span>
                   </div>
-                  {!collapsed && item.badge && (
+                  {item.badge && (
                     <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-md bg-purple-600 text-white">
                       {item.badge}
                     </span>
@@ -150,31 +163,27 @@ const Sidebar = ({ children }) => {
                 ? userProfile.fullName.trim().slice(0, 2).toUpperCase()
                 : '👋'}
             </div>
-            {!collapsed && (
-              <div className="overflow-hidden text-left flex-1">
-                <div className="text-xs font-bold text-stone-900 truncate">
-                  {userProfile?.fullName?.trim() && !['student', 'user', 'alex morgan', 'demo user', 'demo', 'candidate'].includes(userProfile.fullName.trim().toLowerCase())
-                    ? userProfile.fullName.trim()
-                    : 'Hello'}
-                </div>
-                <div className="text-[10px] text-purple-700/80 truncate">{userProfile.email || 'Personal Workspace'}</div>
+            <div className="overflow-hidden text-left flex-1">
+              <div className="text-xs font-bold text-stone-900 truncate">
+                {userProfile?.fullName?.trim() && !['student', 'user', 'alex morgan', 'demo user', 'demo', 'candidate'].includes(userProfile.fullName.trim().toLowerCase())
+                  ? userProfile.fullName.trim()
+                  : 'Hello'}
               </div>
-            )}
+              <div className="text-[10px] text-purple-700/80 truncate">{userProfile.email || 'Personal Workspace'}</div>
+            </div>
           </div>
 
-          {!collapsed && (
-            <button
-              onClick={handleSignOut}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
-            >
-              <LogOut className="w-3.5 h-3.5" /> Sign Out
-            </button>
-          )}
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" /> Sign Out
+          </button>
         </div>
       </aside>
 
       {/* Main Workspace Content with Dynamic Ambient Layering */}
-      <main className="flex-1 h-full overflow-y-auto p-4 sm:p-6 lg:p-8 min-w-0 relative z-10">
+      <main className={`flex-1 h-full overflow-y-auto p-4 sm:p-6 lg:p-8 min-w-0 relative z-10 transition-all duration-300 ${collapsed ? 'md:pt-5 md:pl-28' : ''}`}>
         {children}
       </main>
     </div>
