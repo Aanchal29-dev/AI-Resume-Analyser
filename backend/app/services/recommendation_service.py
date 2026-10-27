@@ -6,6 +6,7 @@ with `is_mock=True` to facilitate frontend and API contract testing.
 Real AI/ML recommendation logic will be integrated in Phase 4.
 """
 
+from app.database.repository import Repository
 from typing import Dict, List, Optional
 from app.core.exceptions import NotFoundError
 from app.schemas.recommendation import (
@@ -22,8 +23,9 @@ class RecommendationService:
     """Service handling role, skill, and course recommendations."""
 
     def __init__(self):
-        self._recommendations: Dict[str, dict] = {}
+        self._recommendations = {}
         self._seed_default_recommendation()
+        self._recommendations = Repository("recommendations", "recommendation_id", self._recommendations)
 
     def _seed_default_recommendation(self):
         """Seeds a sample recommendation for immediate API inspection."""
@@ -111,14 +113,14 @@ class RecommendationService:
         self, user_id: Optional[str] = None
     ) -> List[RecommendationResponse]:
         """Retrieves all recommendation records."""
-        results = list(self._recommendations.values())
+        results = (await self._recommendations.values())
         if user_id:
             results = [r for r in results if r.get("user_id") == user_id]
         return [RecommendationResponse(**r) for r in results]
 
     async def get_recommendation_by_id(self, recommendation_id: str) -> RecommendationResponse:
         """Retrieves a single recommendation record by ID."""
-        rec = self._recommendations.get(recommendation_id)
+        rec = await self._recommendations.get(recommendation_id)
         if not rec:
             raise NotFoundError(resource="Recommendation", identifier=recommendation_id)
         return RecommendationResponse(**rec)
@@ -178,7 +180,7 @@ class RecommendationService:
             "created_at": now,
         }
 
-        self._recommendations[rec_id] = rec_record
+        await self._recommendations.put(rec_id, rec_record)
         return RecommendationResponse(**rec_record)
 
 

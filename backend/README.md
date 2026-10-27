@@ -1,3 +1,7 @@
+## MongoDB integration
+
+See [database setup](app/database/README.md). MongoDB replaces the original MySQL plan; older roadmap notes below describe the original scaffold.
+
 # AI Resume Analysis & Career Assistance Platform - Backend Foundation
 
 Welcome to the FastAPI backend foundation for the **AI Resume Analysis & Career Assistance Platform**.
