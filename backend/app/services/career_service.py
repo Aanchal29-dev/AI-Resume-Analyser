@@ -7,6 +7,7 @@ with `is_mock=True` to facilitate frontend integration testing.
 ML-driven career matching will be implemented in Phase 4.
 """
 
+from app.database.repository import Repository
 from typing import Dict, List, Optional
 from app.core.exceptions import NotFoundError
 from app.schemas.career import (
@@ -21,9 +22,11 @@ class CareerService:
     """Service handling Career Discovery questionnaire processing and role discovery."""
 
     def __init__(self):
-        self._discoveries: Dict[str, dict] = {}
-        self._roles: Dict[str, dict] = {}
+        self._discoveries = {}
+        self._roles = {}
         self._seed_default_career_data()
+        self._discoveries = Repository("discoveries", "discovery_id", self._discoveries)
+        self._roles = Repository("roles", "role_id", self._roles)
 
     def _seed_default_career_data(self):
         """Seeds standard career pathways and sample discovery results."""
@@ -141,18 +144,18 @@ class CareerService:
 
     async def get_role_by_id(self, role_id: str) -> CareerRoleDetailResponse:
         """Retrieves detailed profile for a specific career role."""
-        role = self._roles.get(role_id)
+        role = await self._roles.get(role_id)
         if not role:
             raise NotFoundError(resource="Career Role", identifier=role_id)
         return CareerRoleDetailResponse(**role)
 
     async def get_all_roles(self) -> List[CareerRoleDetailResponse]:
         """Retrieves all explored career roles in the catalog."""
-        return [CareerRoleDetailResponse(**r) for r in self._roles.values()]
+        return [CareerRoleDetailResponse(**r) for r in (await self._roles.values())]
 
     async def get_all_discoveries(self, user_id: Optional[str] = None) -> List[CareerDiscoveryResponse]:
         """Retrieves all questionnaire discovery results."""
-        results = list(self._discoveries.values())
+        results = (await self._discoveries.values())
         if user_id:
             results = [d for d in results if d.get("user_id") == user_id]
         return [CareerDiscoveryResponse(**d) for d in results]
@@ -165,7 +168,7 @@ class CareerService:
         now = get_utc_now()
 
         # Retrieve default roles
-        roles_list = list(self._roles.values())
+        roles_list = (await self._roles.values())
         primary_role = roles_list[0] if roles_list else None
         alternatives = roles_list[1:] if len(roles_list) > 1 else []
 
@@ -188,7 +191,7 @@ class CareerService:
             "is_mock": True,
         }
 
-        self._discoveries[disc_id] = discovery_record
+        await self._discoveries.put(disc_id, discovery_record)
         return CareerDiscoveryResponse(**discovery_record)
 
 

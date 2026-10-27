@@ -6,6 +6,7 @@ with `is_mock=True` to facilitate frontend and API contract testing.
 Real NLP/ML scoring and Gemini API integration will replace this in Phase 4.
 """
 
+from app.database.repository import Repository
 from typing import Dict, List, Optional
 from app.core.exceptions import NotFoundError
 from app.schemas.analysis import (
@@ -24,8 +25,9 @@ class AnalysisService:
     """Service orchestrating ATS analysis and resume evaluation."""
 
     def __init__(self):
-        self._analyses: Dict[str, dict] = {}
+        self._analyses = {}
         self._seed_default_analysis()
+        self._analyses = Repository("analyses", "analysis_id", self._analyses)
 
     def _seed_default_analysis(self):
         """Seeds a sample analysis result for immediate Swagger & API inspection."""
@@ -82,7 +84,7 @@ class AnalysisService:
         self, user_id: Optional[str] = None, resume_id: Optional[str] = None
     ) -> List[AnalysisResponse]:
         """Retrieves all analyses with optional filtering."""
-        results = list(self._analyses.values())
+        results = (await self._analyses.values())
         if user_id:
             results = [a for a in results if a.get("user_id") == user_id]
         if resume_id:
@@ -91,7 +93,7 @@ class AnalysisService:
 
     async def get_analysis_by_id(self, analysis_id: str) -> AnalysisResponse:
         """Retrieves a single analysis by its ID."""
-        analysis = self._analyses.get(analysis_id)
+        analysis = await self._analyses.get(analysis_id)
         if not analysis:
             raise NotFoundError(resource="Resume Analysis", identifier=analysis_id)
         return AnalysisResponse(**analysis)
@@ -160,7 +162,7 @@ class AnalysisService:
             "created_at": now,
         }
 
-        self._analyses[analysis_id] = analysis_record
+        await self._analyses.put(analysis_id, analysis_record)
         return AnalysisResponse(**analysis_record)
 
 

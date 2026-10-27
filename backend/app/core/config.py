@@ -57,11 +57,11 @@ class Settings(BaseSettings):
     # FUTURE PLACEHOLDERS - To be configured in subsequent development phases
     # =========================================================================
 
-    # Future Database (MySQL)
-    DATABASE_URL: str = Field(
-        default="mysql+pymysql://root:password@localhost:3306/resume_platform",
-        description="Placeholder: Will be connected to MySQL in Phase 2",
-    )
+    # MongoDB credentials belong in the local .env, never in Git.
+    MONGODB_URI: str = ""
+    MONGODB_DATABASE: str = "resume_analyser"
+    SEED_DEMO_DATA: bool = False
+    UPLOAD_DIRECTORY: str = "uploads/resumes"
 
     # Future Google OAuth
     GOOGLE_CLIENT_ID: str = Field(

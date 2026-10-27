@@ -4,6 +4,9 @@ Handles file validation, upload processing, resume metadata management,
 and structured resume retrieval.
 """
 
+from app.database.repository import Repository
+from pathlib import Path
+from asyncio import to_thread
 from typing import Dict, List, Optional
 from fastapi import UploadFile
 from app.core.config import settings
@@ -32,9 +35,9 @@ class ResumeService:
     """Service handling Resume lifecycle, upload validation, and metadata."""
 
     def __init__(self):
-        # In-memory storage for Phase 1 backend foundation
-        self._resumes: Dict[str, dict] = {}
+        self._resumes = {}
         self._seed_default_resume()
+        self._resumes = Repository("resumes", "resume_id", self._resumes)
 
     def _seed_default_resume(self):
         """Seeds a sample parsed resume for testing."""
@@ -124,14 +127,14 @@ class ResumeService:
         if user_id:
             return [
                 ResumeResponse(**r)
-                for r in self._resumes.values()
+                for r in (await self._resumes.values())
                 if r.get("user_id") == user_id
             ]
-        return [ResumeResponse(**r) for r in self._resumes.values()]
+        return [ResumeResponse(**r) for r in (await self._resumes.values())]
 
     async def get_resume_by_id(self, resume_id: str) -> ResumeResponse:
         """Retrieves a single resume by resume_id."""
-        resume = self._resumes.get(resume_id)
+        resume = await self._resumes.get(resume_id)
         if not resume:
             raise NotFoundError(resource="Resume", identifier=resume_id)
         return ResumeResponse(**resume)
@@ -170,7 +173,10 @@ class ResumeService:
         resume_id = generate_uuid(prefix="res")
         now = get_utc_now()
 
-        # Phase 1: Store metadata in memory (text extraction will be connected in Phase 4)
+        upload_dir = Path(settings.UPLOAD_DIRECTORY)
+        await to_thread(upload_dir.mkdir, parents=True, exist_ok=True)
+        file_path = upload_dir / f"{resume_id}{ext}"
+        await to_thread(file_path.write_bytes, contents)
         resume_record = {
             "resume_id": resume_id,
             "user_id": user_id or "usr_demo123456",
@@ -178,7 +184,7 @@ class ResumeService:
             "file_name": clean_filename,
             "file_type": file.content_type or ext,
             "file_size_bytes": file_size,
-            "storage_path": f"uploads/resumes/{resume_id}_{clean_filename}",
+            "storage_path": str(file_path),
             "version": 1,
             "raw_text_preview": f"Uploaded file: {clean_filename} ({file_size} bytes)",
             "is_parsed": False,
@@ -186,7 +192,7 @@ class ResumeService:
             "uploaded_at": now,
             "updated_at": now,
         }
-        self._resumes[resume_id] = resume_record
+        await self._resumes.put(resume_id, resume_record)
 
         return ResumeUploadResponse(
             resume_id=resume_id,
@@ -210,38 +216,40 @@ class ResumeService:
             "file_size_bytes": len(payload.raw_text.encode("utf-8")) if payload.raw_text else 0,
             "storage_path": None,
             "version": 1,
+            "raw_text": payload.raw_text,
             "raw_text_preview": (payload.raw_text[:200] + "...") if payload.raw_text and len(payload.raw_text) > 200 else payload.raw_text,
             "is_parsed": payload.parsed_data is not None,
             "parsed_data": payload.parsed_data.model_dump() if payload.parsed_data else None,
             "uploaded_at": now,
             "updated_at": now,
         }
-        self._resumes[resume_id] = resume_record
+        await self._resumes.put(resume_id, resume_record)
         return ResumeResponse(**resume_record)
 
     async def update_resume(self, resume_id: str, payload: ResumeUpdate) -> ResumeResponse:
         """Updates resume title, text, or parsed information."""
-        resume = self._resumes.get(resume_id)
+        resume = await self._resumes.get(resume_id)
         if not resume:
             raise NotFoundError(resource="Resume", identifier=resume_id)
 
         if payload.title is not None:
             resume["title"] = payload.title
         if payload.raw_text is not None:
+            resume["raw_text"] = payload.raw_text
             resume["raw_text_preview"] = payload.raw_text[:200]
         if payload.parsed_data is not None:
             resume["parsed_data"] = payload.parsed_data.model_dump()
             resume["is_parsed"] = True
 
         resume["updated_at"] = get_utc_now()
-        self._resumes[resume_id] = resume
+        await self._resumes.put(resume_id, resume)
         return ResumeResponse(**resume)
 
     async def delete_resume(self, resume_id: str) -> None:
         """Deletes a resume record."""
-        if resume_id not in self._resumes:
+        if not await self._resumes.get(resume_id):
             raise NotFoundError(resource="Resume", identifier=resume_id)
-        del self._resumes[resume_id]
+        await self._resumes.delete(resume_id)
 
 
 # Singleton instance of ResumeService

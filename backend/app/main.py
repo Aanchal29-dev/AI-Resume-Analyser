@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+from app.database.repository import start_database, close_database
 from app.core.exceptions import register_exception_handlers
 from app.routes import api_v1_router, health_router
 
@@ -30,7 +31,11 @@ async def lifespan(app: FastAPI):
     logger.info("API v1 Base Prefix: %s", settings.API_V1_PREFIX)
     logger.info("Documentation available at: /docs and /redoc")
     logger.info("==================================================")
-    yield
+    await start_database()
+    try:
+        yield
+    finally:
+        await close_database()
     logger.info("Shutting down %s...", settings.APP_NAME)
 
 

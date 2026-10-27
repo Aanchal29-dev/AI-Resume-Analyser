@@ -4,6 +4,7 @@ Handles CRUD operations and filtering for job descriptions and target career pro
 In Phase 1, stores data in memory with pre-seeded industry job roles.
 """
 
+from app.database.repository import Repository
 from typing import Dict, List, Optional
 from app.core.exceptions import NotFoundError
 from app.schemas.job import JobCreate, JobResponse, JobUpdate
@@ -14,8 +15,9 @@ class JobService:
     """Service handling job description storage, retrieval, and search."""
 
     def __init__(self):
-        self._jobs: Dict[str, dict] = {}
+        self._jobs = {}
         self._seed_default_jobs()
+        self._jobs = Repository("jobs", "job_id", self._jobs)
 
     def _seed_default_jobs(self):
         """Seeds common target job roles used across the platform."""
@@ -73,14 +75,14 @@ class JobService:
 
     async def get_all_jobs(self, category: Optional[str] = None) -> List[JobResponse]:
         """Retrieves all jobs, optionally filtered by category."""
-        jobs = self._jobs.values()
+        jobs = (await self._jobs.values())
         if category:
             jobs = [j for j in jobs if j.get("category", "").lower() == category.lower()]
         return [JobResponse(**j) for j in jobs]
 
     async def get_job_by_id(self, job_id: str) -> JobResponse:
         """Retrieves a single job description by ID."""
-        job = self._jobs.get(job_id)
+        job = await self._jobs.get(job_id)
         if not job:
             raise NotFoundError(resource="Job Description", identifier=job_id)
         return JobResponse(**job)
@@ -104,12 +106,12 @@ class JobService:
             "created_at": now,
             "updated_at": now,
         }
-        self._jobs[job_id] = job_record
+        await self._jobs.put(job_id, job_record)
         return JobResponse(**job_record)
 
     async def update_job(self, job_id: str, payload: JobUpdate) -> JobResponse:
         """Updates an existing job description."""
-        job = self._jobs.get(job_id)
+        job = await self._jobs.get(job_id)
         if not job:
             raise NotFoundError(resource="Job Description", identifier=job_id)
 
@@ -119,14 +121,14 @@ class JobService:
                 job[key] = value
 
         job["updated_at"] = get_utc_now()
-        self._jobs[job_id] = job
+        await self._jobs.put(job_id, job)
         return JobResponse(**job)
 
     async def delete_job(self, job_id: str) -> None:
         """Deletes a job description."""
-        if job_id not in self._jobs:
+        if not await self._jobs.get(job_id):
             raise NotFoundError(resource="Job Description", identifier=job_id)
-        del self._jobs[job_id]
+        await self._jobs.delete(job_id)
 
 
 # Singleton instance of JobService
